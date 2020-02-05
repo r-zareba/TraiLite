@@ -9,9 +9,7 @@ from selenium.webdriver.support import expected_conditions as EC
 
 
 class BaseBrokerAPI:
-    """
-    Implementation of abstract broker API
-    """
+    """ Implementation of abstract broker API """
     __slots__ = ('_auth_file_path', '_current_asset', '_username', 'is_ready')
 
     def __init__(self, auth_file_path: str) -> None:
@@ -38,9 +36,7 @@ class BaseBrokerAPI:
 
 
 class CMCMarketsAPI(BaseBrokerAPI):
-    """
-    Implementation of CMC Markets Broker
-    """
+    """ Implementation of CMC Markets Broker """
     __slots__ = ('_driver', )
 
     login_url = 'https://platform.cmcmarkets.com/#/login?b=CMC-CFD&r=PL&l=pl'
@@ -68,19 +64,14 @@ class CMCMarketsAPI(BaseBrokerAPI):
         # self.init()
 
     def _set_driver(self) -> None:
-        """
-        Set selenium driver as Firefox without notifications
-        """
+        """ Set selenium driver as Firefox without notifications """
         options = Options()
         options.set_preference("dom.webnotifications.enabled", False)
         driver = selenium.webdriver.Firefox(options=options)
         self._driver = driver
 
     def _read_auth_data(self) -> tuple:
-        """
-        Reads authenctication login data from text file
-        :return: tuple with username and password
-        """
+        """ Reads authenctication login data from text file """
         if os.path.isfile(self._auth_file_path):
             with open(self._auth_file_path, 'r') as f:
                 data = f.readlines()
@@ -89,8 +80,8 @@ class CMCMarketsAPI(BaseBrokerAPI):
 
         username = data[0].rstrip()
         self._username = username
-
         password = data[1].rstrip()
+
         return username, password
 
     def _login(self) -> None:
@@ -124,7 +115,6 @@ class CMCMarketsAPI(BaseBrokerAPI):
         """
         Changes trading tab on website to specific asset
         if it is different than current
-        :param asset: name of asset to trade, for example 'EURUSD'
         """
         if asset != self._current_asset:
             WebDriverWait(self._driver, 10).until(EC.element_to_be_clickable(

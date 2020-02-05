@@ -15,13 +15,6 @@ class BaseStrategy:
 
     def __init__(self, asset: str, enter_interval: str, exit_interval: str,
                  start_hour: int, end_hour: int) -> None:
-        """
-        :param asset:
-        :param enter_interval:
-        :param exit_interval:
-        :param start_hour:
-        :param end_hour:
-        """
         self._asset = asset
         self._enter_interval = enter_interval
         self._exit_interval = exit_interval
@@ -132,8 +125,6 @@ class StochasticOscillatorStrategy(BaseStrategy):
         Checks actual strategy signals based on current position and
         returns action 1 - long or -1 - short for broker API
         In case when no signal was detected - returns 0 (no action)
-        :param current_position:
-        :return: action to take: 0, 1 or -1
         """
         self._indicator_reader = indicators_readers.StochasticOscillatorReader(
             self._asset, self._enter_interval, self._exit_interval,
@@ -158,5 +149,4 @@ class StochasticOscillatorStrategy(BaseStrategy):
         elif current_position == -1 and self._check_exit_interval():
             if self._got_close_short_signal():
                 return 1
-
         return 0
