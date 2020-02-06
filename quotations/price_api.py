@@ -1,7 +1,7 @@
 import abc
 # import requests
 
-import selenium
+from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -11,7 +11,6 @@ from selenium.common.exceptions import (InvalidSessionIdException,
                                         WebDriverException,
                                         NoSuchWindowException,
                                         StaleElementReferenceException)
-
 import settings
 
 
@@ -60,8 +59,8 @@ class TradingViewAPI(BasePriceAPI):
     def __init__(self, asset: str) -> None:
         super().__init__(asset)
         self._asset_url: str = self.price_url + self._asset
-        self._driver: selenium.webdriver = None
-        self._price_element: selenium.webdriver = None
+        self._driver: webdriver = None
+        self._price_element = None
 
     def init(self) -> None:
         """ Sets the driver and price element - prepares for price reading """
@@ -71,15 +70,16 @@ class TradingViewAPI(BasePriceAPI):
             self.is_ready = True
 
     def _set_driver(self) -> None:
-        """ Set selenium driver as Firefox without notifications """
+        """ Set Firefox webdriver """
         options = Options()
         options.set_preference("dom.webnotifications.enabled", False)
 
         if settings.ENVIRONMENT == 'MACOS':
-            driver = selenium.webdriver.Firefox(options=options)
+            driver = webdriver.Firefox(options=options)
         else:
-            driver = selenium.webdriver.Firefox(
-                executable_path='../geckodriver', options=options)
+            options.headless = True
+            driver = webdriver.Firefox(
+                executable_path='./geckodriver', options=options)
         self._driver = driver
 
     def _set_price_element(self) -> None:

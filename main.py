@@ -16,3 +16,5 @@ sys.path.insert(0, './quotations')
 import price_api
 
 eurusd_api = price_api.PriceAPIFactory.get_price_api(asset='EURUSD')
+print(eurusd_api.get_price())
+
