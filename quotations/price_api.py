@@ -12,6 +12,8 @@ from selenium.common.exceptions import (InvalidSessionIdException,
                                         NoSuchWindowException,
                                         StaleElementReferenceException)
 
+import settings
+
 
 class BasePriceAPI:
     """ Base implementation of Selenium type price getters """
@@ -72,7 +74,12 @@ class TradingViewAPI(BasePriceAPI):
         """ Set selenium driver as Firefox without notifications """
         options = Options()
         options.set_preference("dom.webnotifications.enabled", False)
-        driver = selenium.webdriver.Firefox(options=options)
+
+        if settings.ENVIRONMENT == 'MACOS':
+            driver = selenium.webdriver.Firefox(options=options)
+        else:
+            driver = selenium.webdriver.Firefox(
+                executable_path='../geckodriver', options=options)
         self._driver = driver
 
     def _set_price_element(self) -> None:
