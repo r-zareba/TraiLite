@@ -13,8 +13,27 @@ import os
 import sys
 sys.path.insert(0, './quotations')
 
+import pymongo
+
 import price_api
 
 eurusd_api = price_api.PriceAPIFactory.get_price_api(asset='EURUSD')
-print(eurusd_api.get_price())
+price = eurusd_api.get_price()
+
+print(f'Price : {price}')
+print('Starting MongoDB Client')
+
+mongo_client = pymongo.MongoClient('mongodb://localhost:27017/')
+
+print('Mongo client started')
+database = mongo_client['prices']
+collection = database['EURSD']
+#
+ohlc = {'Timestamp': 'ASD',
+        'Price': price}
+
+collection.insert_one(ohlc)
+#
+# print('document added !')
+
 
