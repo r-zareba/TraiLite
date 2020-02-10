@@ -11,6 +11,8 @@ from selenium.common.exceptions import (InvalidSessionIdException,
                                         WebDriverException,
                                         NoSuchWindowException,
                                         StaleElementReferenceException)
+import sys
+sys.path.insert(0, '../')
 import settings
 
 
