@@ -86,11 +86,11 @@ eurusd_strategy = strategies.StochasticOscillatorStrategy(
 
 broker_api = broker_api.CMCMarketsAPI(broker_auth_path)
 
-eurusd_logger = mongo_manager.MongoTransactionLogger('EURUSD')
+eurusd_logger = mongo_manager.MongoTransactionsLogger('EURUSD')
 
 eurusd_bot = trading_bot.TradingBot(strategy_object=eurusd_strategy,
                                     broker_api_object=broker_api,
-                                    transaction_logger=eurusd_logger)
+                                    transactions_logger=eurusd_logger)
 # dax_bot = trading_bot.TradingBot(strategy_object=dax_strategy,
 #                                  broker_api_object=broker_api)
 # gbpusd_bot = trading_bot.TradingBot(strategy_object=gbpusd_strategy,
