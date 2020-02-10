@@ -82,7 +82,7 @@ class TradingViewAPI(BasePriceAPI):
             driver = webdriver.Firefox(options=options)
         else:
             driver = webdriver.Firefox(
-                executable_path='geckodriver', options=options)
+                executable_path='./geckodriver', options=options)
         self._driver = driver
 
     def _set_price_element(self) -> None:
