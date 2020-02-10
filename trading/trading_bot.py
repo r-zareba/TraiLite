@@ -25,6 +25,7 @@ class TradingBot:
                  transactions_logger: mongo_manager.MongoTransactionsLogger):
 
         self._strategy_object = strategy_object
+        self._asset = self._strategy_object.asset
         self._broker_api_object = broker_api_object
         self._transactions_logger = transactions_logger
 
@@ -33,14 +34,6 @@ class TradingBot:
 
         # TODO Temporary for tests
         self._broker_api_object.is_ready = True
-
-    def log_transaction(self, position: str) -> None:
-
-        time = datetime.datetime.now()
-        asset = self._strategy_object.asset
-
-        with open(f'/Users/kq794tb/Desktop/TRAI/Transactions/{asset}.txt', 'a') as f:
-            f.write(f'{time} ---->  {asset}   ---->    {position}\n')
 
     def take_action(self, current_position: int) -> int:
         """
@@ -54,23 +47,25 @@ class TradingBot:
         action = self._strategy_object.get_action(current_position)
 
         if action == 1:
-            # self._broker_api_object.go_long(self._position_size)
-
+            # self._broker_api_object.go_long(self._position_size) TODO
             if current_position == 0:
-                self.log_transaction('Long')
+                self._transactions_logger.log(
+                    asset=self._asset, action=action, comment='Long')
                 return 1
 
-            self.log_transaction('Long (closing Short)')
+            self._transactions_logger.log(
+                asset=self._asset, action=action, comment='Closing Short')
             return 0
 
         elif action == -1:
-            # self._broker_api_object.go_short(self._position_size)
-
+            # self._broker_api_object.go_short(self._position_size) TODO
             if current_position == 0:
-                self.log_transaction('Short')
+                self._transactions_logger.log(
+                    asset=self._asset, action=action, comment='Short')
                 return -1
 
-            self.log_transaction('Short (closing Long)')
+            self._transactions_logger.log(
+                asset=self._asset, action=action, comment='Closing Long')
             return 0
 
         return current_position
