@@ -81,17 +81,15 @@ class MongoTransactionsLogger:
     _mongo_client = SharedBetweenInstances()
     _database = SharedBetweenInstances()
 
-    def __init__(self, username: str):
-        self._username = username
+    def __init__(self, asset: str):
         self._mongo_client = pymongo.MongoClient()
         self._database = self._mongo_client['transactions']
-        self._collection = self._database[self._username]
+        self._collection = self._database[asset]
 
-    def log_transaction(self, asset: str, action: int, comment: str) -> None:
+    def log_transaction(self, action: int, comment: str) -> None:
         """ Inserts trading transaction to MongoDB transactions database """
         transaction = {
             'Timestamp': dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            'Asset': asset,
             'Action': action,
             'Comment': comment
         }

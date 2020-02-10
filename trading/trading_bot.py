@@ -49,23 +49,19 @@ class TradingBot:
         if action == 1:
             # self._broker_api_object.go_long(self._position_size) TODO
             if current_position == 0:
-                self._transactions_logger.log(
-                    asset=self._asset, action=action, comment='Long')
+                self._transactions_logger.log(action=action, comment='Long')
                 return 1
 
-            self._transactions_logger.log(
-                asset=self._asset, action=action, comment='Closing Short')
+            self._transactions_logger.log(action=action, comment='Closing Short')
             return 0
 
         elif action == -1:
             # self._broker_api_object.go_short(self._position_size) TODO
             if current_position == 0:
-                self._transactions_logger.log(
-                    asset=self._asset, action=action, comment='Short')
+                self._transactions_logger.log(action=action, comment='Short')
                 return -1
 
-            self._transactions_logger.log(
-                asset=self._asset, action=action, comment='Closing Long')
+            self._transactions_logger.log(action=action, comment='Closing Long')
             return 0
 
         return current_position
