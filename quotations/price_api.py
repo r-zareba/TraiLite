@@ -12,7 +12,6 @@ from selenium.common.exceptions import (InvalidSessionIdException,
                                         NoSuchWindowException,
                                         StaleElementReferenceException)
 import settings
-import os
 
 
 class BasePriceAPI:
@@ -75,8 +74,6 @@ class TradingViewAPI(BasePriceAPI):
         options = Options()
         options.set_preference('dom.webnotifications.enabled', False)
         options.headless = True
-
-        print(os.getcwd())
 
         if settings.ENVIRONMENT == 'MACOS':
             driver = webdriver.Firefox(options=options)

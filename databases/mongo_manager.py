@@ -2,6 +2,8 @@ import datetime as dt
 import pandas as pd
 import pymongo
 
+import settings
+
 
 class SharedBetweenInstances:
     """
@@ -34,7 +36,7 @@ class BaseMongoPrices:
 
     def __init__(self, asset: str) -> None:
         self._asset = asset
-        self._mongo_client = pymongo.MongoClient()
+        self._mongo_client = pymongo.MongoClient(settings.MONGO_HOST)
         self._database = self._mongo_client['prices']
         self._collection = self._database[self._asset]
 
@@ -82,7 +84,7 @@ class MongoTransactionsLogger:
     _database = SharedBetweenInstances()
 
     def __init__(self, asset: str):
-        self._mongo_client = pymongo.MongoClient()
+        self._mongo_client = pymongo.MongoClient(settings.MONGO_HOST)
         self._database = self._mongo_client['transactions']
         self._collection = self._database[asset]
 
