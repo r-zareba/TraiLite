@@ -1,7 +1,6 @@
-from typing import List
-import pymongo
-import pandas as pd
 import datetime as dt
+import pandas as pd
+import pymongo
 
 
 class SharedBetweenInstances:
@@ -29,9 +28,7 @@ class SharedBetweenInstances:
 
 
 class BaseMongoPrices:
-    """
-    Base Class of Mongo DB Prices database manipulation
-    """
+    """ Base Class of Mongo DB Prices database manipulation """
     _mongo_client = SharedBetweenInstances()
     _database = SharedBetweenInstances()
 
@@ -43,13 +40,11 @@ class BaseMongoPrices:
 
 
 class MongoPricesWriter(BaseMongoPrices):
-    """
-    Implementation of Mongo DB market prices writer interface
-    """
+    """ Implementation of Mongo DB market prices writer interface """
     def __init__(self, asset: str) -> None:
         super().__init__(asset)
 
-    def insert_ohlc(self, shared_list: List[float]) -> None:
+    def insert_ohlc(self, shared_list: list) -> None:
         """
         Inserts OHLC to prices/asset MongoDB collection
         :param shared_list: list of prices shared between processes (workers)
@@ -61,15 +56,11 @@ class MongoPricesWriter(BaseMongoPrices):
                 'High': max(shared_list),
                 'Low': min(shared_list),
                 'Close': shared_list[-1]}
-
-        # Insert document to Mongo database and clean the Redis list
         self._collection.insert_one(ohlc)
 
 
 class MongoPricesReader(BaseMongoPrices):
-    """
-    Implementation of Mongo DB Prices interface
-    """
+    """ Implementation of Mongo DB Prices interface """
     def __init__(self, asset: str) -> None:
         super().__init__(asset)
 
@@ -87,9 +78,8 @@ class MongoPricesReader(BaseMongoPrices):
 
 
 class MongoTransactionsLogger:
-
-    # _mongo_client = SharedBetweenInstances()
-    # _database = SharedBetweenInstances()
+    _mongo_client = SharedBetweenInstances()
+    _database = SharedBetweenInstances()
 
     def __init__(self, username: str):
         self._username = username
@@ -97,15 +87,12 @@ class MongoTransactionsLogger:
         self._database = self._mongo_client['transactions']
         self._collection = self._database[self._username]
 
-    def log_transaction(self, asset: str, position: str) -> None:
-        """
-        Inserts trading transaction to MongoDB transactiobs database
-        :param asset:n name of asset, for example 'EURUSD'
-        :param position: 'long' or 'short'
-        """
+    def log_transaction(self, asset: str, position: int, comment: str) -> None:
+        """ Inserts trading transaction to MongoDB transactions database """
         transaction = {
             'Timestamp': dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             'Asset': asset,
-            'Position': position
+            'Position': position,
+            'Comment': comment
         }
         self._collection.insert_one(transaction)

@@ -21,10 +21,12 @@ class TradingBot:
                  '_is_broker_api_initialized')
 
     def __init__(self, strategy_object: strategies.BaseStrategy,
-                 broker_api_object: broker_api.BaseBrokerAPI) -> None:
+                 broker_api_object: broker_api.BaseBrokerAPI,
+                 transactions_logger: mongo_manager.MongoTransactionsLogger):
 
         self._strategy_object = strategy_object
         self._broker_api_object = broker_api_object
+        self._transactions_logger = transactions_logger
 
         # TODO think about in future
         self._position_size: int = 100

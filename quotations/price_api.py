@@ -72,12 +72,12 @@ class TradingViewAPI(BasePriceAPI):
     def _set_driver(self) -> None:
         """ Set Firefox webdriver """
         options = Options()
-        options.set_preference("dom.webnotifications.enabled", False)
+        options.headless = True
+        options.set_preference('dom.webnotifications.enabled', False)
 
         if settings.ENVIRONMENT == 'MACOS':
             driver = webdriver.Firefox(options=options)
         else:
-            options.headless = True
             driver = webdriver.Firefox(
                 executable_path='./geckodriver', options=options)
         self._driver = driver

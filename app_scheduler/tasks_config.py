@@ -1,7 +1,18 @@
 from celery.schedules import crontab
+import sys
+sys.path.insert(0, '../')
 
-broker_url = 'redis://localhost:6379/0'
-result_backend = 'redis://localhost:6379/0'
+import settings
+
+
+if settings.ENVIRONMENT == 'MACOS':
+    broker_url = 'redis://localhost:6379/0'
+    result_backend = 'redis://localhost:6379/0'
+else:
+    broker_url = 'redis://redis:6379/0'
+    result_backend = 'redis://redis:6379/0'
+
+
 task_serializer = 'json'
 result_serializer = 'json'
 accept_content = ['json']
@@ -18,15 +29,15 @@ beat_schedule = {
         # 'args': ()
     },
 
-    'update-dax': {
-        'task': 'tasks.update_dax',
-        'schedule': 0.250,
-    },
-
-    'update-gbpusd': {
-        'task': 'tasks.update_gbpusd',
-        'schedule': 0.250,
-    },
+    # 'update-dax': {
+    #     'task': 'tasks.update_dax',
+    #     'schedule': 0.250,
+    # },
+    #
+    # 'update-gbpusd': {
+    #     'task': 'tasks.update_gbpusd',
+    #     'schedule': 0.250,
+    # },
 
 
     # Actions
@@ -35,15 +46,15 @@ beat_schedule = {
         'schedule': crontab(minute='*/1')
     },
 
-    'dax-action': {
-        'task': 'tasks.DAXAction',
-        'schedule': crontab(minute='*/1')
-    },
-
-    'gbpusd-action': {
-        'task': 'tasks.GBPUSDAction',
-        'schedule': crontab(minute='*/1')
-    },
+    # 'dax-action': {
+    #     'task': 'tasks.DAXAction',
+    #     'schedule': crontab(minute='*/1')
+    # },
+    #
+    # 'gbpusd-action': {
+    #     'task': 'tasks.GBPUSDAction',
+    #     'schedule': crontab(minute='*/1')
+    # },
 
 }
 
