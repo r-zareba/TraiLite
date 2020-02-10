@@ -21,15 +21,13 @@ class TradingBot:
                  '_is_broker_api_initialized')
 
     def __init__(self, strategy_object: strategies.BaseStrategy,
-                 broker_api_object: broker_api.BaseBrokerAPI,
-                 transactions_logger: mongo_manager.MongoTransactionsLogger):
+                 broker_api_object: broker_api.BaseBrokerAPI):
 
         self._strategy_object = strategy_object
         self._asset = self._strategy_object.asset
         self._broker_api_object = broker_api_object
-        self._transactions_logger = transactions_logger
 
-        # TODO think about in future
+        # TODO
         self._position_size: int = 100
 
         # TODO Temporary for tests
@@ -49,19 +47,23 @@ class TradingBot:
         if action == 1:
             # self._broker_api_object.go_long(self._position_size) TODO
             if current_position == 0:
-                self._transactions_logger.log(action=action, comment='Long')
+                self._log_action(action=action, comment='Long')
                 return 1
 
-            self._transactions_logger.log(action=action, comment='Closing Short')
+            self._log_action(action=action, comment='Closing Short')
             return 0
 
         elif action == -1:
             # self._broker_api_object.go_short(self._position_size) TODO
             if current_position == 0:
-                self._transactions_logger.log(action=action, comment='Short')
+                self._log_action(action=action, comment='Short')
                 return -1
 
-            self._transactions_logger.log(action=action, comment='Closing Long')
+            self._log_action(action=action, comment='Closing Long')
             return 0
 
         return current_position
+
+    def _log_action(self, action: int, comment: str) -> None:
+        tx_logger = mongo_manager.MongoTransactionsLogger(self._asset)
+        tx_logger.log(action=action, comment=comment)

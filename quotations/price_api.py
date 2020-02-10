@@ -53,8 +53,8 @@ class TradingViewAPI(BasePriceAPI):
         StaleElementReferenceException)
 
     price_url = 'https://www.tradingview.com/symbols/'
-    price_xpath = '/html/body/div[2]/div[3]/div/header/div/div[3]/div[1]/' \
-                  'div/div/div/div[1]/div[1]'
+    price_xpath = '/html/body/div[2]/div[4]/div/header/' \
+                  'div/div[3]/div[1]/div/div/div/div[1]/div[1]'
 
     def __init__(self, asset: str) -> None:
         super().__init__(asset)
@@ -72,12 +72,12 @@ class TradingViewAPI(BasePriceAPI):
     def _set_driver(self) -> None:
         """ Set Firefox webdriver """
         options = Options()
-        options.set_preference("dom.webnotifications.enabled", False)
+        options.set_preference('dom.webnotifications.enabled', False)
+        options.headless = True
 
         if settings.ENVIRONMENT == 'MACOS':
             driver = webdriver.Firefox(options=options)
         else:
-            options.headless = True
             driver = webdriver.Firefox(
                 executable_path='./geckodriver', options=options)
         self._driver = driver
