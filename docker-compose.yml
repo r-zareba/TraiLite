@@ -6,6 +6,9 @@ services:
       - "5000:5000"
     environment:
       ENVIRONMENT: DOCKER
-    network_mode: "host"
+    links:
+      - db
   redis:
     image: "redis:alpine"
+  db:
+    image: mongo
