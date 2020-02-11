@@ -6,6 +6,10 @@ RUN apt-get update && apt-get install -y \
     curl unzip wget \
     xvfb
 
+RUN apt-get --no-cache --virtual .build-deps gcc musl-dev \
+ && pip install cython \
+ && rm .build-deps
+
 RUN FIREFOX_SETUP=firefox-setup.tar.bz2 && \
     apt-get purge firefox && \
     wget -O $FIREFOX_SETUP "https://download.mozilla.org/?product=firefox-latest&os=linux64" && \
@@ -14,10 +18,10 @@ RUN FIREFOX_SETUP=firefox-setup.tar.bz2 && \
     rm $FIREFOX_SETUP
 
 COPY requirements.txt /
-RUN pip3 install -r /requirements.txt
+RUN pip install -r /requirements.txt
 
 RUN mkdir -p /usr/src/app
 COPY . /usr/src/app
 WORKDIR /usr/src/app
 
-CMD ["python3", "main.py"]
+CMD ["python", "main.py"]
