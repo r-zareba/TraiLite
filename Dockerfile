@@ -6,9 +6,8 @@ RUN apt-get update && apt-get install -y \
     curl unzip wget \
     xvfb
 
-RUN apt-get --no-cache --virtual .build-deps gcc musl-dev \
- && pip install cython \
- && rm .build-deps
+RUN apt-get gcc musl-dev \
+ && pip install cython
 
 RUN FIREFOX_SETUP=firefox-setup.tar.bz2 && \
     apt-get purge firefox && \
