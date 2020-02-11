@@ -1,4 +1,5 @@
-FROM python:3.6.9
+# FROM python:3.6.9
+FROM arm32v7/python:3.6
 
 RUN apt-get update && apt-get install -y \
     fonts-liberation libappindicator3-1 libasound2 libatk-bridge2.0-0 \
@@ -14,7 +15,6 @@ RUN FIREFOX_SETUP=firefox-setup.tar.bz2 && \
     rm $FIREFOX_SETUP
 
 COPY requirements.txt /
-RUN pip install cython
 RUN pip install -r /requirements.txt
 
 RUN mkdir -p /usr/src/app
