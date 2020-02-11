@@ -10,8 +10,8 @@ idna==2.8
 importlib-metadata==0.23
 kombu==4.6.5
 more-itertools==7.2.0
-numpy==1.17.2
-pandas==0.25.1
+numpy
+pandas
 pycparser==2.19
 pymongo==3.9.0
 pyOpenSSL==19.0.0
