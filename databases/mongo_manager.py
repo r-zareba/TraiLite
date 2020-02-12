@@ -88,7 +88,7 @@ class MongoTransactionsLogger:
         self._database = self._mongo_client['transactions']
         self._collection = self._database[asset]
 
-    def log_transaction(self, action: int, comment: str) -> None:
+    def log(self, action: int, comment: str) -> None:
         """ Inserts trading transaction to MongoDB transactions database """
         transaction = {
             'Timestamp': dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
