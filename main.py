@@ -1,18 +1,14 @@
 import os
 import subprocess
 
-print(os.getcwd())
 os.chdir('./app_scheduler')
-print(os.getcwd())
-
-
-subprocess.run('celery -A tasks worker --beat --loglevel=info', shell=True)
+subprocess.run('celery -A tasks worker --beat --loglevel=WARNING', shell=True)
 
 
 # import os
 # import sys
 # import redis
-# sys.path.insert(0, './quotations')
+# sys.path.insert(0, './price_api')
 #
 # import pymongo
 #

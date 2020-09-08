@@ -23,7 +23,6 @@ class StochasticOscillator:
 
 
 class SimpleMovingAverage:
-
     __slots__ = ()
 
     @staticmethod
@@ -38,7 +37,6 @@ class SimpleMovingAverage:
 
 
 class ExponentialMovingAverage:
-
     __slots__ = ()
 
     @staticmethod

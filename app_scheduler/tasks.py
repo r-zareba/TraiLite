@@ -5,13 +5,14 @@ from datetime import datetime as dt
 import sys
 sys.path.insert(0, '../databases')
 sys.path.insert(0, '../trading')
-sys.path.insert(0, '../quotations')
+sys.path.insert(0, '../price_api')
 import tasks_config
-import mongo_manager
+from mongo_manager import MongoManager
 import strategies
 import broker_api
 import trading_bot
-import price_api
+from price_api import price_api
+from ohlc import OHLC
 
 
 broker_auth_path = '/Users/kq794tb/Desktop/TRAI/cmc_markets.txt'
@@ -120,17 +121,18 @@ class EURUSDAction(app.Task):
     """A task."""
     # Database connection instance shared between workers
     # See https://docs.celeryproject.org/en/latest/userguide/tasks.html
-    _mongo_writer = None
+    _database_manager = None
 
     @property
-    def mongo_writer(self):
-        if self._mongo_writer is None:
-            self._mongo_writer = mongo_manager.MongoPricesWriter('EURUSD')
-        return self._mongo_writer
+    def database_manager(self):
+        if self._database_manager is None:
+            self._database_manager = MongoManager('EURUSD')
+        return self._database_manager
 
     def run(self):
         if eurusd_shared_list:
-            self.mongo_writer.insert_ohlc(shared_list=eurusd_shared_list)
+            self.database_manager.insert_ohlc(
+                OHLC.from_prices_list(list(eurusd_shared_list)))
             del eurusd_shared_list[:]
 
             with eurusd_position.get_lock():

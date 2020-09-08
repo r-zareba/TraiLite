@@ -1,6 +1,6 @@
 FROM python:3.6.9
-# FROM arm32v7/python:3.6
 
+# Install firefox to run selenium
 RUN apt-get update && apt-get install -y \
     fonts-liberation libappindicator3-1 libasound2 libatk-bridge2.0-0 \
     libnspr4 libnss3 lsb-release xdg-utils libxss1 libdbus-glib-1-2 \
@@ -15,7 +15,7 @@ RUN FIREFOX_SETUP=firefox-setup.tar.bz2 && \
     rm $FIREFOX_SETUP
 
 COPY requirements.txt /
-RUN pip install -r /requirements.txt
+RUN pip install -r /requirements.txt --use-feature=2020-resolver
 
 RUN mkdir -p /usr/src/app
 COPY . /usr/src/app

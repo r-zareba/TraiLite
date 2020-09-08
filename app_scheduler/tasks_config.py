@@ -25,7 +25,7 @@ beat_schedule = {
     # Updating prices
     'update-eurusd': {
         'task': 'tasks.update_eurusd',
-        'schedule': 0.250,
+        'schedule': 0.100,
         # 'args': ()
     },
 

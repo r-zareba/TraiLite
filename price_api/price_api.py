@@ -1,12 +1,11 @@
 import abc
-# import requests
 
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import (InvalidSessionIdException,
                                         WebDriverException,
                                         NoSuchWindowException,
@@ -14,8 +13,8 @@ from selenium.common.exceptions import (InvalidSessionIdException,
 import settings
 
 
-class BasePriceAPI:
-    """ Base implementation of Selenium type price getters """
+class BasePriceAPI(abc.ABC):
+    """ Price Api interface """
     __slots__ = ('_asset', 'is_ready')
 
     @property
@@ -53,8 +52,7 @@ class TradingViewAPI(BasePriceAPI):
         StaleElementReferenceException)
 
     price_url = 'https://www.tradingview.com/symbols/'
-    price_xpath = '/html/body/div[2]/div[4]/div/header/' \
-                  'div/div[3]/div[1]/div/div/div/div[1]/div[1]'
+    price_xpath = '/html/body/div[2]/div[5]/div/header/div/div[3]/div[1]/div/div/div/div[1]/div[1]'
 
     def __init__(self, asset: str) -> None:
         super().__init__(asset)
@@ -124,35 +122,3 @@ class PriceAPIFactory:
 
         raise ConnectionError('None of Price APIs is working! '
                               'Check internet connection!')
-
-
-# class FreeForexAPI(BasePriceAPI):
-#     """
-#     Free Forex API class
-#     """
-#     APIExceptions = (
-#         AttributeError
-#     )
-#
-#     def __init__(self, asset: str) -> None:
-#         super().__init__(asset)
-#         self._session = None
-#
-#     @property
-#     def ready(self):
-#         return self._ready
-#
-#     def init(self) -> None:
-#         self._session = requests.Session()
-#
-#     def get_price(self):
-#         try:
-#             data = self.session.get(
-#                 f'https://www.freeforexapi.com/api/live?pairs={self._asset}')
-#         except Exception as e:
-#             print('asd')
-#         else:
-#             return data.json()['rates'][self._asset]['rate']
-#
-#     def close(self):
-#         self._session.close()
