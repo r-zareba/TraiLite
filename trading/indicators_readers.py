@@ -6,7 +6,7 @@ sys.path.insert(0, '../databases')
 sys.path.insert(0, '../trading_indicators')
 sys.path.insert(0, '../data_preprocessing')
 
-import mongo_manager
+import prices_manager
 import technical_indicators
 import market_data_preprocessing
 
@@ -40,7 +40,7 @@ class BaseIndicatorReader:
         self._necessary_num_of_m1: int = max(self._num_of_enter_m1,
                                              self._num_of_exit_m1)
 
-        self._price_reader = mongo_manager.MongoManager(self._asset)
+        self._price_reader = prices_manager.MongoPricesManager(self._asset)
         self._n_ohlc_to_download: int = self._get_n_ohlc_to_download()
 
         self._enter_df = pd.DataFrame()

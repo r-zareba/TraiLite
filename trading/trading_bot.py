@@ -5,7 +5,7 @@ import strategies
 
 import sys
 sys.path.insert(0, '../databases')
-import mongo_manager
+from transactions_manager import MongoTransactionsManager
 
 
 class TradingBot:
@@ -65,5 +65,5 @@ class TradingBot:
         return current_position
 
     def _log_action(self, action: int, comment: str) -> None:
-        tx_logger = mongo_manager.MongoTransactionsLogger(self._asset)
+        tx_logger = MongoTransactionsManager(self._asset)
         tx_logger.log(action=action, comment=comment)

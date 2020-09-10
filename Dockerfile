@@ -1,5 +1,11 @@
 FROM python:3.6.9
 
+ENV TZ="Europe/Warsaw"
+RUN date
+
+# Disable setuid / setgid binaries - for security
+RUN find / -perm /6000 -type f -exec chmod a-s {} \; || true
+
 # Install firefox to run selenium
 RUN apt-get update && apt-get install -y \
     fonts-liberation libappindicator3-1 libasound2 libatk-bridge2.0-0 \
@@ -15,10 +21,17 @@ RUN FIREFOX_SETUP=firefox-setup.tar.bz2 && \
     rm $FIREFOX_SETUP
 
 COPY requirements.txt /
+RUN pip install --upgrade pip
 RUN pip install -r /requirements.txt --use-feature=2020-resolver
 
-RUN mkdir -p /usr/src/app
-COPY . /usr/src/app
-WORKDIR /usr/src/app
+# Set up a new user to run the services
+RUN useradd -ms /bin/bash trai_app
+USER trai_app
+ENV APP_PATH /home/trai_app
+
+# Copy project files to user directory
+RUN mkdir -p $APP_PATH/app
+COPY --chown=trai_app:trai_app . $APP_PATH/app
+WORKDIR $APP_PATH/app
 
 CMD ["python", "main.py"]

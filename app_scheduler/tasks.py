@@ -7,7 +7,7 @@ sys.path.insert(0, '../databases')
 sys.path.insert(0, '../trading')
 sys.path.insert(0, '../price_api')
 import tasks_config
-from mongo_manager import MongoManager
+from prices_manager import MongoPricesManager
 import strategies
 import broker_api
 import trading_bot
@@ -42,8 +42,8 @@ eurusd_api = price_api.PriceAPIFactory.get_price_api(asset='EURUSD')
 
 eurusd_strategy = strategies.StochasticOscillatorStrategy(
     asset='EURUSD',
-    enter_interval='1T',
-    exit_interval='1T',
+    enter_interval='5T',
+    exit_interval='5T',
     start_hour=7,
     end_hour=17,
     enter_k_period=14,
@@ -126,7 +126,7 @@ class EURUSDAction(app.Task):
     @property
     def database_manager(self):
         if self._database_manager is None:
-            self._database_manager = MongoManager('EURUSD')
+            self._database_manager = MongoPricesManager('EURUSD')
         return self._database_manager
 
     def run(self):
