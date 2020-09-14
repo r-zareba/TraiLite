@@ -29,10 +29,10 @@ beat_schedule = {
         # 'args': ()
     },
 
-    # 'update-dax': {
-    #     'task': 'tasks.update_dax',
-    #     'schedule': 0.250,
-    # },
+    'update-dax': {
+        'task': 'tasks.update_dax',
+        'schedule': 0.100,
+    },
     #
     # 'update-gbpusd': {
     #     'task': 'tasks.update_gbpusd',
@@ -46,10 +46,10 @@ beat_schedule = {
         'schedule': crontab(minute='*/1')
     },
 
-    # 'dax-action': {
-    #     'task': 'tasks.DAXAction',
-    #     'schedule': crontab(minute='*/1')
-    # },
+    'dax-action': {
+        'task': 'tasks.DAXAction',
+        'schedule': crontab(minute='*/1')
+    },
     #
     # 'gbpusd-action': {
     #     'task': 'tasks.GBPUSDAction',

@@ -9,7 +9,7 @@ from databases.transactions_manager import MongoTransactionsManager
 
 mongo_host = 'mongodb://localhost:27017/'
 
-asset = 'EURUSD'
+asset = 'DAX'
 prices_manager = MongoPricesManager(asset, host=mongo_host)
 transactions_manager = MongoTransactionsManager(asset, host=mongo_host)
 

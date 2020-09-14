@@ -1,9 +1,6 @@
 import abc
 import numpy as np
 import pandas as pd
-# from . import data_preprocessing
-# from . import file_readers
-# from . import trading_ratios
 
 import file_readers
 import trading_ratios
@@ -16,18 +13,15 @@ import technical_indicators
 
 
 class BaseTechnicalsBacktester:
-    """
-    Base abstract parent class of technical trading_indicators trading strategies
-    """
+    """ Base class for technical strategies backtesting """
     __slots__ = ('_enter_interval', '_exit_interval', '_start_hour',
                  '_end_hour', '_fee', '_data', '_exit_df',
                  '_long_enter_condition', '_long_exit_condition',
                  '_short_enter_condition', '_short_exit_condition',
                  '_is_strategy_applied', '_ratios_calculator')
 
-    def __init__(
-            self, enter_interval: str, exit_interval: str, start_hour: int,
-            end_hour: int, fee: float) -> None:
+    def __init__(self, enter_interval: str, exit_interval: str, start_hour: int,
+                 end_hour: int, fee: float):
         """
         :param enter_interval:
          interval for calculating position enter '%D', '%H', '%T'
@@ -79,21 +73,15 @@ class BaseTechnicalsBacktester:
                 'with no strategy applied!')
 
     def _apply_long_positions(self) -> None:
-        """
-        Applies Long positions logic to dataframe
-        """
+        """ Applies Long positions logic to dataframe """
         self._set_long_positions_logic()
-
         self._data['Long'] = np.nan
         self._data.loc[self._long_enter_condition, 'Long'] = 1
         self._data.loc[self._long_exit_condition, 'Long'] = 0
 
     def _apply_short_positions(self) -> None:
-        """
-        Applies Short positions logic to dataframe
-        """
+        """ Applies Short positions logic to dataframe """
         self._set_short_positions_logic()
-
         self._data['Short'] = np.nan
         self._data.loc[self._short_enter_condition, 'Short'] = -1
         self._data.loc[self._short_exit_condition, 'Short'] = 0
@@ -111,11 +99,8 @@ class BaseTechnicalsBacktester:
         self._is_strategy_applied = True
 
     def _fit(self):
-        """
-        Applies all backtest process
-        """
+        """ Applies all backtest process """
         self._apply_strategy_positions()
-
         self._ratios_calculator = trading_ratios.TradingRatiosCalculator(
             data=self._data, fee=self._fee)
         self._ratios_calculator.fit()
@@ -169,44 +154,17 @@ class BaseTechnicalsBacktester:
 
 
 class StochasticOscilatorBacktester(BaseTechnicalsBacktester):
-    """
-    Implementation of backtesting based on Stochastic Oscilator
-    """
+    """ Implementation of backtesting based on Stochastic Oscilator """
     __slots__ = ('_enter_k_period', '_enter_smooth', '_enter_d_period',
                  '_exit_k_period', '_exit_smooth', '_exit_d_period',
                  '_stoch_long_threshold', '_stoch_short_threshold')
 
-    def __init__(
-            self, enter_interval: str, exit_interval: str, start_hour: int,
-            end_hour: int, fee: float, enter_k_period: int,
-            enter_smooth: int, enter_d_period: int, exit_k_period: int,
-            exit_smooth: int, exit_d_period: int,
-            stoch_long_threshold: int = 20,
-            stoch_short_threshold: int = 80) -> None:
-        """
-        TODO
-        :param enter_interval:
-        :param exit_interval:
-        :param start_hour:
-        :param end_hour:
-        :param fee:
-        :param enter_k_period:
-        :param enter_smooth:
-        :param enter_d_period:
-        :param exit_k_period:
-        :param exit_smooth:
-        :param exit_d_period:
-        :param stoch_long_threshold:
-        :param stoch_short_threshold:
-        """
-
-        """
-        Init function for setting stochastic oscillator strategy parameters
-        :param k_period: back time period for calculating K value
-        :param smooth: number of periods to smooth K_value
-        :param d_period: K_value moving average period for calculate D_value
-        """
-
+    def __init__(self, enter_interval: str, exit_interval: str, start_hour: int,
+                 end_hour: int, fee: float, enter_k_period: int,
+                 enter_smooth: int, enter_d_period: int, exit_k_period: int,
+                 exit_smooth: int, exit_d_period: int,
+                 stoch_long_threshold=20.0,
+                 stoch_short_threshold=80.0):
         super().__init__(enter_interval, exit_interval,
                          start_hour, end_hour, fee)
 
@@ -224,10 +182,7 @@ class StochasticOscilatorBacktester(BaseTechnicalsBacktester):
         self._exit_d_period = exit_d_period
 
     def _calculate_indicators(self):
-        """
-        Calculates full stochastic oscilator
-        and applies it to data
-        """
+        """ Applies stochastic oscilator to historical data """
         technical_indicators.StochasticOscillator.apply_full_stochastic_to_df(
             df=self._data,
             k_period=self._enter_k_period,
@@ -251,7 +206,6 @@ class StochasticOscilatorBacktester(BaseTechnicalsBacktester):
 
     def _set_long_positions_logic(self):
         """
-        Signals:
         Long position: K line > D line, prev. K < prev. D, K < 20
         Close Long position: exit_K < exit_D, prev. exit_K > prev. exit_D
         """
@@ -267,7 +221,6 @@ class StochasticOscilatorBacktester(BaseTechnicalsBacktester):
 
     def _set_short_positions_logic(self):
         """
-        Signals:
         Short position: K line < D line, prev. K > prev. D, K > 80
         Close Short position: exit_K > exit_D, prev. exit_K < prev. exit_D
         """
@@ -285,19 +238,14 @@ class StochasticOscilatorBacktester(BaseTechnicalsBacktester):
 # import objsize
 
 
-path = '/Users/kq794tb/Desktop/datasets/EURUSD_bid.csv'
-strategy = StochasticOscilatorBacktester(
-    enter_interval='1T', exit_interval='5T', start_hour=8, end_hour=16,
-    fee=0.00015, enter_k_period=14, enter_smooth=3, enter_d_period=3,
-    exit_k_period=14, exit_smooth=3, exit_d_period=3, stoch_long_threshold=20,
-    stoch_short_threshold=80)
-
-strategy.fit_from_file(path, 'dukascopy')
-
-# print(objsize.get_deep_size(strategy))
-# strategy.fit_from_file(file_path=path, file_source='dukascopy')
-# print(type(strategy._long_enter_condition))
-# print(objsize.get_deep_size(strategy))
+# path = '/Users/kq794tb/Desktop/datasets/EURUSD_bid.csv'
+# strategy = StochasticOscilatorBacktester(
+#     enter_interval='1T', exit_interval='5T', start_hour=8, end_hour=16,
+#     fee=0.00015, enter_k_period=14, enter_smooth=3, enter_d_period=3,
+#     exit_k_period=14, exit_smooth=3, exit_d_period=3, stoch_long_threshold=20,
+#     stoch_short_threshold=80)
+#
+# strategy.fit_from_file(path, 'dukascopy')
 
 
 

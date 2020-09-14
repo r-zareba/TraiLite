@@ -63,7 +63,7 @@ class MongoPricesManager(PricesManager):
             'Low': ohlc.low,
             'Close': ohlc.close}
         self._collection.insert_one(ohlc_to_insert)
-        print(f'OHLC inserted: {ohlc}')
+        print(f'{self._asset} OHLC inserted: {ohlc}')
 
     def get_n_last_ohlc(self, n: int) -> pd.DataFrame:
         """

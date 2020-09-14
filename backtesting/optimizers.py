@@ -28,10 +28,8 @@ class BaseTechnicalOptimizer:
 
     def __init__(self, file_path: str, file_source: str,
                  param_space: dict, fee: float,
-                 priority: str = 'return') -> None:
-        """
-        TODO
-        """
+                 priority: str = 'return'):
+
         self._file_path = file_path
         self._file_source = file_source
         self._param_space = param_space
@@ -40,20 +38,19 @@ class BaseTechnicalOptimizer:
 
         self._Backtester: technicals.BaseTechnicalsBacktester = None
         self._market_data = pd.DataFrame()
-        self._trained: bool = False
-        self._best_params: dict = {}
+        self._trained = False
+        self._best_params = dict()
 
         # Hyperopt
-        self._hyperopt_space: dict = {}
+        self._hyperopt_space = dict()
         self._trials = hyperopt.Trials()
 
     @property
     def best_params(self) -> dict:
-        if self._trained:
-            return self._best_params
-        else:
+        if not self._trained:
             raise ValueError('Cannot get best params dict - '
                              'optimizer is not trained, use fit method first')
+        return self._best_params
 
     def _prepare_data(self) -> None:
         """
@@ -67,9 +64,7 @@ class BaseTechnicalOptimizer:
 
     @abc.abstractmethod
     def _init_hyperopt_space(self) -> None:
-        """
-        Wraps object dict type param space to hyperopt dict type space
-        """
+        """ Wraps object dict type param space to hyperopt dict type space """
         self._hyperopt_space = {
             'enter_interval': hyperopt.hp.choice(
                 'enter_interval', self._param_space['enter_interval']),
@@ -82,11 +77,8 @@ class BaseTechnicalOptimizer:
         }
 
     def _objective_function(self, params: dict) -> float:
-        """
-        Function to minimize using bayesian hyperopt model
-        """
+        """ Function to minimize using bayesian hyperopt model """
         params['fee'] = self._fee
-
         backtester_model = self._Backtester(**params)
         backtester_model.fit_from_data(market_data=self._market_data)
 
@@ -128,22 +120,15 @@ class BaseTechnicalOptimizer:
 
 
 class StochasticOptimizer(BaseTechnicalOptimizer):
-    """
-    Bayesian optimizer for Stochastic Indicator strategy
-    """
+    """ Bayesian optimizer for Stochastic Indicator strategy """
     __slots__ = ()
 
     def __init__(self, file_path: str, file_source: str, param_space: dict,
                  fee: float, priority: str) -> None:
-        """
-        Full inheritance from base class
-        Set Technical Indicator to strategy specific - StochasticOptimizer
-        """
         super().__init__(file_path, file_source, param_space, fee, priority)
         self._Backtester = technicals.StochasticOscilatorBacktester
 
     def _init_hyperopt_space(self) -> None:
-
         super()._init_hyperopt_space()
         self._hyperopt_space['enter_k_period'] = hyperopt.hp.choice(
             'enter_k_period', self._param_space['enter_k_period'])
@@ -170,7 +155,7 @@ class StochasticOptimizer(BaseTechnicalOptimizer):
 #
 
 # import objsize
-path = '/Users/kq794tb/Desktop/datasets/EURUSD_bid.csv'
+path = '/Users/kq794tb/Desktop/TRAI_Lite/DAX_bid.csv'
 file_source = 'dukascopy'
 
 my_params = {
@@ -191,9 +176,10 @@ my_params = {
 
 optimizer = StochasticOptimizer(
     file_path=path, file_source=file_source, param_space=my_params,
-    fee=0.00015, priority='return')
+    fee=0.0, priority='return')
 
 optimizer.fit(n_iterations=100)
+print(optimizer.best_params)
 #
 # print(objsize.get_deep_size(optimizer))
 # optimizer.fit()
