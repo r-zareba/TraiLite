@@ -5,12 +5,20 @@ sys.path.insert(0, '../')
 import settings
 
 
+# if settings.ENVIRONMENT == 'MACOS':
+#     broker_url = 'redis://localhost:6379/0'
+#     result_backend = 'redis://localhost:6379/0'
+# else:
+#     broker_url = 'redis://redis:6379/0'
+#     result_backend = 'redis://redis:6379/0'
+
+
 if settings.ENVIRONMENT == 'MACOS':
-    broker_url = 'redis://localhost:6379/0'
-    result_backend = 'redis://localhost:6379/0'
+    broker_url = 'amqp://myuser:mypassword@localhost:5672/myvhost'
+    result_backend = 'amqp://myuser:mypassword@localhost:5672/myvhost'
 else:
-    broker_url = 'redis://redis:6379/0'
-    result_backend = 'redis://redis:6379/0'
+    broker_url = 'amqp://admin:pass@rabbit:5672'
+    result_backend = 'rpc://admin:pass@rabbit:5672'
 
 
 task_serializer = 'json'
@@ -25,7 +33,7 @@ beat_schedule = {
     # Updating prices
     'update-eurusd': {
         'task': 'tasks.update_eurusd',
-        'schedule': 0.100,
+        'schedule': 0.100,  # 100 milliseconds
         # 'args': ()
     },
 

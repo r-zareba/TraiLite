@@ -95,7 +95,9 @@ dax_bot = trading_bot.TradingBot(strategy_object=dax_strategy,
 #                                     broker_api_object=broker_api)
 
 
-""" Updating prices list - occures every 250 miliseconds """
+""" Updating prices list - occures every 100 miliseconds """
+
+
 @app.task(ignore_result=True)
 def update_eurusd() -> None:
     eurusd_shared_list.append(eurusd_api.get_price())
