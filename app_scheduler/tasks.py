@@ -1,6 +1,5 @@
 import celery
 import multiprocessing
-from datetime import datetime as dt
 
 import sys
 sys.path.insert(0, '../databases')
@@ -26,34 +25,34 @@ app.config_from_object('tasks_config')
 """ Define shared attributes for all Celery workers """
 manager = multiprocessing.Manager()
 
-eurusd_shared_list = manager.list()
+# eurusd_shared_list = manager.list()
 dax_shared_list = manager.list()
 # gbpusd_shared_list = manager.list()
 
-eurusd_position = multiprocessing.Value('i', 0)
+# eurusd_position = multiprocessing.Value('i', 0)
 dax_position = multiprocessing.Value('i', 0)
 # gbpusd_position = multiprocessing.Value('i', 0)
 
 
 """ Trading Bots initialization """
-eurusd_api = price_api.PriceAPIFactory.get_price_api(asset='EURUSD')
+# eurusd_api = price_api.PriceAPIFactory.get_price_api(asset='EURUSD')
 dax_api = price_api.PriceAPIFactory.get_price_api(asset='DAX')
 # gbpusd_api = price_api.PriceAPIFactory.get_price_api(asset='GBPUSD')
 
-eurusd_strategy = strategies.StochasticOscillatorStrategy(
-    asset='EURUSD',
-    enter_interval='1T',
-    exit_interval='15T',
-    start_hour=7,
-    end_hour=18,
-    enter_k_period=7,
-    enter_smooth=2,
-    enter_d_period=2,
-    exit_k_period=13,
-    exit_smooth=1,
-    exit_d_period=2,
-    long_stoch_threshold=29,
-    short_stoch_threshold=70)
+# eurusd_strategy = strategies.StochasticOscillatorStrategy(
+#     asset='EURUSD',
+#     enter_interval='1T',
+#     exit_interval='15T',
+#     start_hour=7,
+#     end_hour=18,
+#     enter_k_period=7,
+#     enter_smooth=2,
+#     enter_d_period=2,
+#     exit_k_period=13,
+#     exit_smooth=1,
+#     exit_d_period=2,
+#     long_stoch_threshold=29,
+#     short_stoch_threshold=70)
 
 dax_strategy = strategies.StochasticOscillatorStrategy(
     asset='DAX',
@@ -87,8 +86,8 @@ dax_strategy = strategies.StochasticOscillatorStrategy(
 
 broker_api = broker_api.CMCMarketsAPI(broker_auth_path)
 
-eurusd_bot = trading_bot.TradingBot(strategy_object=eurusd_strategy,
-                                    broker_api_object=broker_api)
+# eurusd_bot = trading_bot.TradingBot(strategy_object=eurusd_strategy,
+#                                     broker_api_object=broker_api)
 dax_bot = trading_bot.TradingBot(strategy_object=dax_strategy,
                                  broker_api_object=broker_api)
 # gbpusd_bot = trading_bot.TradingBot(strategy_object=gbpusd_strategy,
@@ -98,9 +97,9 @@ dax_bot = trading_bot.TradingBot(strategy_object=dax_strategy,
 """ Updating prices list - occures every 100 miliseconds """
 
 
-@app.task(ignore_result=True)
-def update_eurusd() -> None:
-    eurusd_shared_list.append(eurusd_api.get_price())
+# @app.task(ignore_result=True)
+# def update_eurusd() -> None:
+#     eurusd_shared_list.append(eurusd_api.get_price())
 
 
 @app.task(ignore_result=True)
@@ -119,30 +118,32 @@ Inserting OHLC to mongoDB, take trading bot action
 """
 
 
-class EURUSDAction(app.Task):
-    """A task."""
-    # Database connection instance shared between workers
-    # See https://docs.celeryproject.org/en/latest/userguide/tasks.html
-    _database_manager = None
-
-    @property
-    def database_manager(self):
-        if self._database_manager is None:
-            self._database_manager = MongoPricesManager('EURUSD')
-        return self._database_manager
-
-    def run(self):
-        if eurusd_shared_list:
-            self.database_manager.insert_ohlc(
-                OHLC.from_prices_list(list(eurusd_shared_list)))
-            del eurusd_shared_list[:]
-
-            with eurusd_position.get_lock():
-                eurusd_position.value = eurusd_bot.take_action(
-                    eurusd_position.value)
+# class EURUSDAction(app.Task):
+#     """A task."""
+#     # Database connection instance shared between workers
+#     # See https://docs.celeryproject.org/en/latest/userguide/tasks.html
+#     ignore_result = True
+#     _database_manager = None
+#
+#     @property
+#     def database_manager(self):
+#         if self._database_manager is None:
+#             self._database_manager = MongoPricesManager('EURUSD')
+#         return self._database_manager
+#
+#     def run(self):
+#         if eurusd_shared_list:
+#             self.database_manager.insert_ohlc(
+#                 OHLC.from_prices_list(list(eurusd_shared_list)))
+#             del eurusd_shared_list[:]
+#
+#             with eurusd_position.get_lock():
+#                 eurusd_position.value = eurusd_bot.take_action(
+#                     eurusd_position.value)
 
 
 class DAXAction(app.Task):
+    ignore_result = True
     _database_manager = None
 
     @property
@@ -181,7 +182,7 @@ class DAXAction(app.Task):
 
 
 """ Register Celery action tasks for workers """
-eurusd_action = app.register_task(EURUSDAction())
+# eurusd_action = app.register_task(EURUSDAction())
 dax_action = app.register_task(DAXAction())
 # gbpusd_action = app.register_task(GBPUSDAction())
 

@@ -4,6 +4,7 @@ import pymongo
 
 import settings
 from ohlc import OHLC
+from mongo_manager import MongoManager
 
 
 class SharedBetweenInstances:
@@ -41,7 +42,7 @@ class PricesManager(abc.ABC):
         pass
 
 
-class MongoPricesManager(PricesManager):
+class MongoPricesManager(MongoManager, PricesManager):
     _mongo_client = SharedBetweenInstances()
     _database = SharedBetweenInstances()
 
@@ -70,9 +71,10 @@ class MongoPricesManager(PricesManager):
         Gets n last records from object MongoDB collection
         Returns it as pandas Dataframe
         """
-        df = pd.DataFrame(
-            list(self._collection.find().limit(n).sort('$natural', -1)))
-        df.set_index(pd.DatetimeIndex(df['Timestamp']), inplace=True)
-        df.drop('Timestamp', axis=1, inplace=True)
-        # df.loc[:, 'Timestamp'] = df['Timestamp'].apply(lambda x: x.round('T'))
-        return df.sort_index(ascending=True)
+        return self.get_n_last_records(n)
+        # df = pd.DataFrame(
+        #     list(self._collection.find().limit(n).sort('$natural', -1)))
+        # df.set_index(pd.DatetimeIndex(df['Timestamp']), inplace=True)
+        # df.drop('Timestamp', axis=1, inplace=True)
+        # # df.loc[:, 'Timestamp'] = df['Timestamp'].apply(lambda x: x.round('T'))
+        # return df.sort_index(ascending=True)

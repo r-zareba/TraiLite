@@ -1,19 +1,11 @@
 import abc
 import os
-from datetime import datetime as dt
 
 import selenium
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
-from selenium.common.exceptions import (InvalidSessionIdException,
-                                        WebDriverException,
-                                        NoSuchWindowException,
-                                        StaleElementReferenceException)
-
-import objsize
 
 
 class BaseBrokerAPI:
@@ -45,27 +37,48 @@ class CMCMarketsAPI(BaseBrokerAPI):
     __slots__ = ('_driver', '_current_asset', 'is_ready')
 
     login_url = 'https://platform.cmcmarkets.com/#/login?b=CMC-CFD&r=PL&l=pl'
-    login_button_xpath = '/html/body/div[1]/cmc-login/div/section/div[1]/' \
-                         'div[1]/form/div[4]/input'
+    login_button_xpath = '/html/body/div[1]/div/cmc-login/div/section/div[1]' \
+                         '/div[1]/form/div[4]'
 
     asset_tab_xpaths = {
-        'EURUSD': '/html/body/div[1]/header/div[2]/div[1]/div[2]/ul/li[1]',
-        'DAX': '/html/body/div[1]/header/div[2]/div[1]/div[2]/ul/li[2]',
-        'GBPUSD': '/html/body/div[1]/header/div[2]/div[1]/div[2]/ul/li[3]'}
+        'EURUSD': '/html/body/div[1]/div/div[1]/header/div[3]/div[1]/div/div[1]/ul/li[1]/div[1]/span[1]',
+        'DAX': '/html/body/div[1]/div/div[1]/header/div[3]/div[1]/div/div[1]/ul/li[2]/div[1]/span[1]',
+        'GBPUSD': '/html/body/div[1]/div/div[1]/header/div[3]/div[1]/div/div[1]/ul/li[3]/div[1]/span[1]'}
 
     position_tab_xpaths = {
-        'long': '/html/body/div[1]/main/div[3]/div/div[3]/div/div/section//'
-                'div[@class="price-box buy stale"]',
-        'short': '/html/body/div[1]/main/div[3]/div/div[3]/div/div/section//'
-                 'div[@class="price-box sell stale"]'}
+        'long': '/html/body/div[1]/div/main/div[2]/div[3]/div[2]/div[1]/div/div/section/div[1]/div[3]/div/div[3]/div/div[3]',
 
-    take_position_xpath = ''
+        'short': '/html/body/div[1]/div/main/div[2]/div[3]/div[2]/div[1]/div/div/section/div[1]/div[3]/div/div[3]/div/div[2]'}
 
     def __init__(self, auth_file_path: str) -> None:
         super().__init__(auth_file_path)
         self._driver: selenium.webdriver = None
-        self._current_asset: str = ''
-        self.is_ready: bool = False
+        self._current_asset = ''
+        self.is_ready = False
+
+    def init(self) -> None:
+        if not self.is_ready:
+            self._set_driver()
+            self._login()
+            self.is_ready = True
+
+    def go_long(self, asset: str, position_size: int) -> None:
+        """
+        Takes long position on specific asset
+        """
+        self._switch_asset_tab(asset=asset)
+        self._switch_position_type(position_type='long')
+        self._take_position()
+        self._current_asset = asset
+
+    def go_short(self, asset: str, position_size: int) -> None:
+        """
+        Takes short position on specific asset
+        """
+        self._switch_asset_tab(asset=asset)
+        self._switch_position_type(position_type='short')
+        self._take_position()
+        self._current_asset = asset
 
     def _set_driver(self) -> None:
         """
@@ -107,15 +120,7 @@ class CMCMarketsAPI(BaseBrokerAPI):
             (By.XPATH, self.login_button_xpath)))
         self._driver.find_element(By.XPATH, self.login_button_xpath).click()
 
-    def init(self) -> None:
-
-        if not self.is_ready:
-            self._set_driver()
-            self._login()
-            self.is_ready = True
-
     def close(self) -> None:
-
         self.is_ready = False
         if self._driver.service.process:
             self._driver.quit()
@@ -132,7 +137,7 @@ class CMCMarketsAPI(BaseBrokerAPI):
             self._driver.find_element(
                 By.XPATH, self.asset_tab_xpaths[asset]).click()
 
-    def _swtich_position_type(self, position_type: str) -> None:
+    def _switch_position_type(self, position_type: str) -> None:
         """
         Waits for spinner to dissapear and click long or short tab
         :param position_type: 'long' or 'short'
@@ -154,25 +159,7 @@ class CMCMarketsAPI(BaseBrokerAPI):
         #     (By.XPATH, self.take_position_xpath)))
         # self._driver.find_element(By.XPATH, self.take_position_xpath).click()
 
-    def go_long(self, asset: str, position_size: int) -> None:
-        """
-        Takes long position on specific asset
-        """
-        self._switch_asset_tab(asset=asset)
-        self._swtich_position_type(position_type='long')
-        self._take_position()
-        self._current_asset = asset
 
-    def go_short(self, asset: str, position_size: int) -> None:
-        """
-        Takes short position on specific asset
-        """
-        self._switch_asset_tab(asset=asset)
-        self._swtich_position_type(position_type='short')
-        self._take_position()
-        self._current_asset = asset
-
-
-broker_api = CMCMarketsAPI('/home/rafal/Desktop/GITHUB/cmc_markets.txt')
+broker_api = CMCMarketsAPI('/Users/kq794tb/Desktop/TRAI_Lite/cmc_markets.txt')
 broker_api.init()
 # print(objsize.get_deep_size(broker_api))

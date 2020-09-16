@@ -4,6 +4,7 @@ import pandas as pd
 import pymongo
 
 import settings
+from mongo_manager import MongoManager
 
 
 class SharedBetweenInstances:
@@ -41,7 +42,7 @@ class TransactionsManager(abc.ABC):
         pass
 
 
-class MongoTransactionsManager(TransactionsManager):
+class MongoTransactionsManager(MongoManager, TransactionsManager):
     _mongo_client = SharedBetweenInstances()
     _database = SharedBetweenInstances()
 
@@ -50,6 +51,7 @@ class MongoTransactionsManager(TransactionsManager):
             self._mongo_client = pymongo.MongoClient(host)
         else:
             self._mongo_client = pymongo.MongoClient(settings.MONGO_HOST)
+        self._asset = asset
         self._database = self._mongo_client['transactions']
         self._collection = self._database[asset]
 
@@ -63,8 +65,4 @@ class MongoTransactionsManager(TransactionsManager):
         self._collection.insert_one(transaction)
 
     def get_n_last_transactions(self, n: int) -> pd.DataFrame:
-        df = pd.DataFrame(
-            list(self._collection.find().limit(n).sort('$natural', -1)))
-        df.set_index(pd.DatetimeIndex(df['Timestamp']), inplace=True)
-        df.drop('Timestamp', axis=1, inplace=True)
-        return df.sort_index(ascending=True)
+        return self.get_n_last_records(n)

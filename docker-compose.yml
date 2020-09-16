@@ -1,8 +1,9 @@
-version: '3'
+version: '3.5'
 services:
 
   web:
     build: .
+    shm_size: "256m"
     ports:
       - "5000:5000"
     environment:
@@ -10,16 +11,21 @@ services:
     links:
       - db
 
-  rabbit:
-    hostname: rabbit
-    image: rabbitmq:latest
-    environment:
-        - RABBITMQ_DEFAULT_USER=admin
-        - RABBITMQ_DEFAULT_PASS=pass
-    ports:
-        - "5672:5672"
+  redis:
+    image: "redis:alpine"
     logging:
       driver: "none"
+
+#  rabbit:
+#    hostname: rabbit
+#    image: rabbitmq:latest
+#    environment:
+#        - RABBITMQ_DEFAULT_USER=admin
+#        - RABBITMQ_DEFAULT_PASS=pass
+#    ports:
+#        - "5672:5672"
+#    logging:
+#      driver: "none"
 
   db:
     image: mongo

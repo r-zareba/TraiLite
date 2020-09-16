@@ -16,4 +16,5 @@ if __name__ == '__main__':
     os.chdir('./app_scheduler')
     remove_log_files()
     subprocess.run(
-        'celery -A tasks worker --beat --loglevel=WARNING', shell=True)
+        'celery -A tasks worker --beat --loglevel=WARNING -c 4 --purge',
+        shell=True)

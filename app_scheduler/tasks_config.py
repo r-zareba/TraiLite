@@ -5,20 +5,20 @@ sys.path.insert(0, '../')
 import settings
 
 
-# if settings.ENVIRONMENT == 'MACOS':
-#     broker_url = 'redis://localhost:6379/0'
-#     result_backend = 'redis://localhost:6379/0'
-# else:
-#     broker_url = 'redis://redis:6379/0'
-#     result_backend = 'redis://redis:6379/0'
-
-
 if settings.ENVIRONMENT == 'MACOS':
-    broker_url = 'amqp://myuser:mypassword@localhost:5672/myvhost'
-    result_backend = 'amqp://myuser:mypassword@localhost:5672/myvhost'
+    broker_url = 'redis://localhost:6379/0'
+    result_backend = 'redis://localhost:6379/0'
 else:
-    broker_url = 'amqp://admin:pass@rabbit:5672'
-    result_backend = 'rpc://admin:pass@rabbit:5672'
+    broker_url = 'redis://redis:6379/0'
+    result_backend = 'redis://redis:6379/0'
+
+
+# if settings.ENVIRONMENT == 'MACOS':
+#     broker_url = 'amqp://myuser:mypassword@localhost:5672/myvhost'
+#     result_backend = 'amqp://myuser:mypassword@localhost:5672/myvhost'
+# else:
+#     broker_url = 'amqp://admin:pass@rabbit:5672'
+#     result_backend = 'rpc://admin:pass@rabbit:5672'
 
 
 task_serializer = 'json'
@@ -26,16 +26,18 @@ result_serializer = 'json'
 accept_content = ['json']
 timezone = 'Europe/Warsaw'
 enable_utc = True
+task_ignore_result = True
+task_time_limit = 2  # seconds
 
 """ Periodic tasks """
 beat_schedule = {
 
     # Updating prices
-    'update-eurusd': {
-        'task': 'tasks.update_eurusd',
-        'schedule': 0.100,  # 100 milliseconds
-        # 'args': ()
-    },
+    # 'update-eurusd': {
+    #     'task': 'tasks.update_eurusd',
+    #     'schedule': 0.100,  # 100 milliseconds
+    #     # 'args': ()
+    # },
 
     'update-dax': {
         'task': 'tasks.update_dax',
@@ -49,10 +51,10 @@ beat_schedule = {
 
 
     # Actions
-    'eurusd-action': {
-        'task': 'tasks.EURUSDAction',
-        'schedule': crontab(minute='*/1')
-    },
+    # 'eurusd-action': {
+    #     'task': 'tasks.EURUSDAction',
+    #     'schedule': crontab(minute='*/1')
+    # },
 
     'dax-action': {
         'task': 'tasks.DAXAction',
