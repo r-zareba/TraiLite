@@ -67,6 +67,15 @@ class TradingViewAPI(BasePriceAPI):
             self._set_price_element()
             self.is_ready = True
 
+    def get_price(self) -> float:
+        if self.is_ready and self._price_element.text:
+            return float(self._price_element.text)
+
+    def close(self) -> None:
+        self.is_ready = False
+        if self._driver.service.process:
+            self._driver.quit()
+
     def _set_driver(self) -> None:
         """ Set Firefox webdriver """
         options = Options()
@@ -93,15 +102,6 @@ class TradingViewAPI(BasePriceAPI):
         else:
             self._price_element = self._driver.find_element(
                 By.XPATH, self.price_xpath)
-
-    def get_price(self) -> float:
-        if self.is_ready:
-            return float(self._price_element.text)
-
-    def close(self) -> None:
-        self.is_ready = False
-        if self._driver.service.process:
-            self._driver.quit()
 
 
 class PriceAPIFactory:

@@ -3,8 +3,8 @@ import pandas as pd
 import pymongo
 
 import settings
-from ohlc import OHLC
-from mongo_manager import MongoManager
+from .ohlc import OHLC
+from .mongo_manager import MongoManager
 
 
 class SharedBetweenInstances:
@@ -47,6 +47,7 @@ class MongoPricesManager(MongoManager, PricesManager):
     _database = SharedBetweenInstances()
 
     def __init__(self, asset: str, host=''):
+        super().__init__()
         self._asset = asset
         if host:
             self._mongo_client = pymongo.MongoClient(host)
@@ -64,7 +65,6 @@ class MongoPricesManager(MongoManager, PricesManager):
             'Low': ohlc.low,
             'Close': ohlc.close}
         self._collection.insert_one(ohlc_to_insert)
-        print(f'{self._asset} OHLC inserted: {ohlc}')
 
     def get_n_last_ohlc(self, n: int) -> pd.DataFrame:
         """

@@ -1,14 +1,9 @@
 import abc
 import pandas as pd
 
-import sys
-sys.path.insert(0, '../databases')
-sys.path.insert(0, '../trading_indicators')
-sys.path.insert(0, '../data_preprocessing')
-
-import prices_manager
-import technical_indicators
-import market_data_preprocessing
+from databases import prices_manager
+from trading_indicators import technical_indicators
+from data_preprocessing import market_data_preprocessing
 
 
 n_minutes_dict = {

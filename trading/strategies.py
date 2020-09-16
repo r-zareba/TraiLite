@@ -1,7 +1,7 @@
 import abc
 from datetime import datetime as dt
 
-import indicators_readers
+from . import indicators_readers
 
 
 class BaseStrategy:

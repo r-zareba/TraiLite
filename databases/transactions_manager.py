@@ -4,7 +4,7 @@ import pandas as pd
 import pymongo
 
 import settings
-from mongo_manager import MongoManager
+from .mongo_manager import MongoManager
 
 
 class SharedBetweenInstances:
@@ -47,6 +47,7 @@ class MongoTransactionsManager(MongoManager, TransactionsManager):
     _database = SharedBetweenInstances()
 
     def __init__(self, asset: str, host=''):
+        super().__init__()
         if host:
             self._mongo_client = pymongo.MongoClient(host)
         else:

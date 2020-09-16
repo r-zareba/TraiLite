@@ -1,11 +1,9 @@
 import datetime
 
-import broker_api
-import strategies
+from . import broker_api
+from . import strategies
 
-import sys
-sys.path.insert(0, '../databases')
-from transactions_manager import MongoTransactionsManager
+from databases.transactions_manager import MongoTransactionsManager
 
 
 class TradingBot:
