@@ -2,7 +2,7 @@ import datetime
 from timeloop import Timeloop
 
 from databases.prices_manager import MongoPricesManager
-from databases.ohlc import OHLC
+from databases.ohlc import OHLC, Color
 from trading import strategies, broker_api, trading_bot
 from price_api import price_api
 
@@ -72,7 +72,7 @@ def dax_update():
     if datetime.datetime.now().second == 0:
         if not dax_updating:
             dax_updating = True
-            ohlc = OHLC.from_prices_list(dax_prices_list)
+            ohlc = OHLC.from_prices_list(dax_prices_list, Color.GREEN)
             dax_prices_manager.insert_ohlc(ohlc)
             tl.logger.info(f'DAX inserted: {ohlc}')
 
@@ -95,7 +95,7 @@ def eurusd_update():
     if datetime.datetime.now().second == 0:
         if not eurusd_updating:
             eurusd_updating = True
-            ohlc = OHLC.from_prices_list(eurusd_prices_list)
+            ohlc = OHLC.from_prices_list(eurusd_prices_list, Color.YELLOW)
             eurusd_prices_manager.insert_ohlc(ohlc)
             tl.logger.info(f'EURUSD inserted: {ohlc}')
 
