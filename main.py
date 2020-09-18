@@ -58,6 +58,29 @@ eurusd_strategy = strategies.StochasticOscillatorStrategy(
 eurusd_bot = trading_bot.TradingBot(strategy_object=eurusd_strategy,
                                     broker_api_object=broker_api)
 
+gbpusd_updating = False
+gbpusd_prices_list = list()
+gbpusd_position = 0
+gbpusd_prices_manager = MongoPricesManager('GBPUSD')
+gbpusd_api = price_api.PriceAPIFactory.get_price_api(asset='GBPUSD')
+gbpusd_strategy = strategies.StochasticOscillatorStrategy(
+    asset='GBPUSD',
+    enter_interval='1T',
+    exit_interval='15T',
+    start_hour=7,
+    end_hour=16,
+    enter_k_period=7,
+    enter_smooth=2,
+    enter_d_period=2,
+    exit_k_period=12,
+    exit_smooth=2,
+    exit_d_period=2,
+    long_stoch_threshold=25,
+    short_stoch_threshold=70)
+
+gbpusd_bot = trading_bot.TradingBot(strategy_object=eurusd_strategy,
+                                    broker_api_object=broker_api)
+
 
 @tl.job(interval=datetime.timedelta(milliseconds=100))
 def dax_update():
@@ -103,6 +126,29 @@ def eurusd_update():
             eurusd_position = eurusd_bot.take_action(eurusd_position)
     else:
         eurusd_updating = False
+
+
+@tl.job(interval=datetime.timedelta(milliseconds=100))
+def gbpusd_update():
+    global gbpusd_updating
+    global gbpusd_position
+
+    gbpusd_price = gbpusd_api.get_price()
+    if gbpusd_price:
+        gbpusd_prices_list.append(gbpusd_price)
+
+    # Execute every full minute
+    if datetime.datetime.now().second == 0:
+        if not gbpusd_updating:
+            gbpusd_updating = True
+            ohlc = OHLC.from_prices_list(gbpusd_prices_list, Color.RED)
+            gbpusd_prices_manager.insert_ohlc(ohlc)
+            tl.logger.info(f'GBPUSD inserted: {ohlc}')
+
+            del gbpusd_prices_list[:]
+            gbpusd_position = gbpusd_bot.take_action(gbpusd_position)
+    else:
+        gbpusd_updating = False
 
 
 if __name__ == '__main__':
