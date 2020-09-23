@@ -67,3 +67,16 @@ class MongoTransactionsManager(MongoManager, TransactionsManager):
 
     def get_n_last_transactions(self, n: int) -> pd.DataFrame:
         return self.get_n_last_records(n)
+
+    def get_current_position(self) -> int:
+        try:
+            last_transaction = self.get_n_last_transactions(1)
+        except Exception as e:
+            return 0
+        else:
+            if 'closing' in last_transaction['Comment'].str.lower().values[0]:
+                return 0
+            elif 'long' in last_transaction['Comment'].str.lower().values[0]:
+                return 1
+            elif 'short' in last_transaction['Comment'].str.lower().values[0]:
+                return -1

@@ -39,6 +39,10 @@ class BasePriceAPI(abc.ABC):
     def close(self) -> None:
         pass
 
+    @abc.abstractmethod
+    def restart(self) -> None:
+        pass
+
 
 class TradingViewAPI(BasePriceAPI):
     """ Implementation of Trading View prices using Selenium """
@@ -72,9 +76,13 @@ class TradingViewAPI(BasePriceAPI):
             return float(self._price_element.text)
 
     def close(self) -> None:
-        self.is_ready = False
         if self._driver.service.process:
             self._driver.quit()
+            self.is_ready = False
+
+    def restart(self) -> None:
+        self.close()
+        self.init()
 
     def _set_driver(self) -> None:
         """ Set Firefox webdriver """

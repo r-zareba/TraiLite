@@ -5,7 +5,7 @@ services:
     build: .
     shm_size: "256m"
     ports:
-      - "5000:5000"
+      - "5050:5050"
     environment:
       ENVIRONMENT: DOCKER
     links:
