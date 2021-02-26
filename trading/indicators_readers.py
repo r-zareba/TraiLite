@@ -1,9 +1,10 @@
 import abc
 import pandas as pd
 
-from databases import prices_manager
+from databases.mongo.mongo_manager import MongoPricesManager
 from trading_indicators import technical_indicators
 from data_preprocessing import market_data_preprocessing
+from settings import MONGO_HOST
 
 
 n_minutes_dict = {
@@ -35,7 +36,7 @@ class BaseIndicatorReader:
         self._necessary_num_of_m1: int = max(self._num_of_enter_m1,
                                              self._num_of_exit_m1)
 
-        self._price_reader = prices_manager.MongoPricesManager(self._asset)
+        self._price_reader = MongoPricesManager(MONGO_HOST, self._asset)
         self._n_ohlc_to_download: int = self._get_n_ohlc_to_download()
 
         self._enter_df = pd.DataFrame()
@@ -115,11 +116,9 @@ class StochasticOscillatorReader(BaseIndicatorReader):
             self._exit_k_period, self._exit_d_period)
         max_of_smooths = max(self._enter_smooth, self._exit_smooth)
         # TODO calculate optimum num of records from DB
-        return (necessary_periods *
-                self._necessary_num_of_m1) + max_of_smooths + 20
+        return (necessary_periods * self._necessary_num_of_m1) + max_of_smooths + 20
 
     def update_indicators(self) -> None:
-
         if self._market_data_updated():
             technical_indicators.StochasticOscillator.apply_full_stochastic_to_df(
                 df=self._enter_df,

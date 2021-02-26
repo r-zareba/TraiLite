@@ -3,7 +3,7 @@ import datetime
 from . import broker_api
 from . import strategies
 
-from databases.transactions_manager import MongoTransactionsManager
+from databases.mongo.mongo_manager import MongoTransactionsManager
 
 
 class TradingBot:

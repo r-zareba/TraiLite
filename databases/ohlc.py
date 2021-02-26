@@ -37,6 +37,7 @@ class OHLC:
                    print_color=print_color)
 
     def __str__(self):
+        """ For nice, colorful printing """
         return f'{Color.BOLD}Timestamp - {Color.END}' \
                f'{self.print_color}{self.timestamp}{Color.END}, ' \
                f'{Color.BOLD}Open - {Color.END}' \

@@ -1,11 +1,11 @@
 import datetime
 from timeloop import Timeloop
 
-from databases.prices_manager import MongoPricesManager
-from databases.transactions_manager import MongoTransactionsManager
+from databases.mongo.mongo_manager import MongoPricesManager, MongoTransactionsManager
 from databases.ohlc import OHLC, Color
 from trading import strategies, broker_api, trading_bot
 from price_api import price_api
+from settings import MONGO_HOST
 
 """ 
 Important note:
@@ -24,15 +24,15 @@ prices_printed = False
 
 dax_updating = False
 dax_prices_list = list()
-dax_transactions_manager = MongoTransactionsManager('DAX')
+dax_transactions_manager = MongoTransactionsManager(MONGO_HOST, 'DAX')
 dax_position = dax_transactions_manager.get_current_position()
 dax_n_restarted = 0
-dax_prices_manager = MongoPricesManager('DAX')
+dax_prices_manager = MongoPricesManager(MONGO_HOST, 'DAX')
 dax_api = price_api.PriceAPIFactory.get_price_api(asset='DAX')
 dax_strategy = strategies.StochasticOscillatorStrategy(
     asset='DAX',
     enter_interval='1T',
-    exit_interval='5T',
+    exit_interval='15T',
     start_hour=7,
     end_hour=16,
     enter_k_period=7,
@@ -49,10 +49,10 @@ dax_bot = trading_bot.TradingBot(strategy_object=dax_strategy,
 
 eurusd_updating = False
 eurusd_prices_list = list()
-eurusd_transactions_manager = MongoTransactionsManager('EURUSD')
+eurusd_transactions_manager = MongoTransactionsManager(MONGO_HOST, 'EURUSD')
 eurusd_position = eurusd_transactions_manager.get_current_position()
 eurusd_n_restarted = 0
-eurusd_prices_manager = MongoPricesManager('EURUSD')
+eurusd_prices_manager = MongoPricesManager(MONGO_HOST, 'EURUSD')
 eurusd_api = price_api.PriceAPIFactory.get_price_api(asset='EURUSD')
 eurusd_strategy = strategies.StochasticOscillatorStrategy(
     asset='EURUSD',
@@ -75,14 +75,14 @@ eurusd_bot = trading_bot.TradingBot(strategy_object=eurusd_strategy,
 
 gbpusd_updating = False
 gbpusd_prices_list = list()
-gbpusd_transactions_manager = MongoTransactionsManager('GBPUSD')
+gbpusd_transactions_manager = MongoTransactionsManager(MONGO_HOST, 'GBPUSD')
 gbpusd_position = gbpusd_transactions_manager.get_current_position()
 gbpusd_n_restarted = 0
-gbpusd_prices_manager = MongoPricesManager('GBPUSD')
+gbpusd_prices_manager = MongoPricesManager(MONGO_HOST, 'GBPUSD')
 gbpusd_api = price_api.PriceAPIFactory.get_price_api(asset='GBPUSD')
 gbpusd_strategy = strategies.StochasticOscillatorStrategy(
     asset='GBPUSD',
-    enter_interval='1T',
+    enter_interval='5T',
     exit_interval='5T',
     start_hour=7,
     end_hour=16,

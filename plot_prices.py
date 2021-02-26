@@ -4,8 +4,7 @@ import plotly.graph_objects as go
 import sys
 sys.path.insert(0, './databases')
 
-from databases.prices_manager import MongoPricesManager
-
+from databases.mongo.mongo_manager import MongoPricesManager
 
 MONGO_HOST = 'mongodb://localhost:27017/'
 
