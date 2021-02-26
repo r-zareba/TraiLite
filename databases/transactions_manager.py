@@ -11,3 +11,7 @@ class TransactionsManager(abc.ABC):
     @abc.abstractmethod
     def get_n_last_transactions(self, n: int) -> pd.DataFrame:
         pass
+
+    @abc.abstractmethod
+    def get_current_position(self) -> int:
+        pass

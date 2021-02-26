@@ -10,8 +10,8 @@ from settings import MONGO_HOST
 """ 
 Important note:
 Meant to run in a single process (multithreaded)
+No locks required
 """
-
 
 MAX_RETRIES = 3
 PRICE_READ_INTERVAL = 100  # milliseconds
@@ -26,7 +26,7 @@ dax_updating = False
 dax_prices_list = list()
 dax_transactions_manager = MongoTransactionsManager(MONGO_HOST, 'DAX')
 dax_position = dax_transactions_manager.get_current_position()
-dax_n_restarted = 0
+dax_n_times_restarted = 0
 dax_prices_manager = MongoPricesManager(MONGO_HOST, 'DAX')
 dax_api = price_api.PriceAPIFactory.get_price_api(asset='DAX')
 dax_strategy = strategies.StochasticOscillatorStrategy(
@@ -45,13 +45,14 @@ dax_strategy = strategies.StochasticOscillatorStrategy(
     short_stoch_threshold=70)
 
 dax_bot = trading_bot.TradingBot(strategy_object=dax_strategy,
-                                 broker_api_object=broker_api)
+                                 broker_api_object=broker_api,
+                                 transactions_manager=dax_transactions_manager)
 
 eurusd_updating = False
 eurusd_prices_list = list()
 eurusd_transactions_manager = MongoTransactionsManager(MONGO_HOST, 'EURUSD')
 eurusd_position = eurusd_transactions_manager.get_current_position()
-eurusd_n_restarted = 0
+eurusd_n_times_restarted = 0
 eurusd_prices_manager = MongoPricesManager(MONGO_HOST, 'EURUSD')
 eurusd_api = price_api.PriceAPIFactory.get_price_api(asset='EURUSD')
 eurusd_strategy = strategies.StochasticOscillatorStrategy(
@@ -69,15 +70,15 @@ eurusd_strategy = strategies.StochasticOscillatorStrategy(
     long_stoch_threshold=20,
     short_stoch_threshold=70)
 
-
 eurusd_bot = trading_bot.TradingBot(strategy_object=eurusd_strategy,
-                                    broker_api_object=broker_api)
+                                    broker_api_object=broker_api,
+                                    transactions_manager=eurusd_transactions_manager)
 
 gbpusd_updating = False
 gbpusd_prices_list = list()
 gbpusd_transactions_manager = MongoTransactionsManager(MONGO_HOST, 'GBPUSD')
 gbpusd_position = gbpusd_transactions_manager.get_current_position()
-gbpusd_n_restarted = 0
+gbpusd_n_times_restarted = 0
 gbpusd_prices_manager = MongoPricesManager(MONGO_HOST, 'GBPUSD')
 gbpusd_api = price_api.PriceAPIFactory.get_price_api(asset='GBPUSD')
 gbpusd_strategy = strategies.StochasticOscillatorStrategy(
@@ -96,7 +97,12 @@ gbpusd_strategy = strategies.StochasticOscillatorStrategy(
     short_stoch_threshold=70)
 
 gbpusd_bot = trading_bot.TradingBot(strategy_object=gbpusd_strategy,
-                                    broker_api_object=broker_api)
+                                    broker_api_object=broker_api,
+                                    transactions_manager=gbpusd_transactions_manager)
+
+"""
+Register periodic tasks
+"""
 
 
 @tl.job(interval=datetime.timedelta(milliseconds=PRICE_READ_INTERVAL))
@@ -104,22 +110,22 @@ def dax_update():
     global dax_updating
     global dax_position
     global dax_api
-    global dax_n_restarted
+    global dax_n_times_restarted
     global prices_printed
 
     try:
         dax_price = dax_api.get_price()
     except Exception as e:
-        if dax_n_restarted < MAX_RETRIES:
+        if dax_n_times_restarted < MAX_RETRIES:
             tl.logger.error(f'DAX price api error: {e}\nRestarting...')
             dax_api.restart()
-            dax_n_restarted += 1
+            dax_n_times_restarted += 1
     else:
         if dax_price:
             dax_prices_list.append(dax_price)
-        dax_n_restarted = 0
+        dax_n_times_restarted = 0
 
-    if dax_n_restarted >= MAX_RETRIES:
+    if dax_n_times_restarted >= MAX_RETRIES:
         # TODO Send email / sms / notification
         return
 
@@ -146,22 +152,22 @@ def eurusd_update():
     global eurusd_updating
     global eurusd_position
     global eurusd_api
-    global eurusd_n_restarted
+    global eurusd_n_times_restarted
     global prices_printed
 
     try:
         eurusd_price = eurusd_api.get_price()
     except Exception as e:
-        if eurusd_n_restarted < MAX_RETRIES:
+        if eurusd_n_times_restarted < MAX_RETRIES:
             tl.logger.error(f'EURUSD price api error: {e}\nRestarting...')
             eurusd_api.restart()
-            eurusd_n_restarted += 1
+            eurusd_n_times_restarted += 1
     else:
         if eurusd_price:
             eurusd_prices_list.append(eurusd_price)
-        eurusd_n_restarted = 0
+        eurusd_n_times_restarted = 0
 
-    if eurusd_n_restarted >= MAX_RETRIES:
+    if eurusd_n_times_restarted >= MAX_RETRIES:
         # TODO Send email / sms / notification
         return
 
@@ -188,22 +194,22 @@ def gbpusd_update():
     global gbpusd_updating
     global gbpusd_position
     global gbpusd_api
-    global gbpusd_n_restarted
+    global gbpusd_n_times_restarted
     global prices_printed
 
     try:
         gbpusd_price = gbpusd_api.get_price()
     except Exception as e:
-        if gbpusd_n_restarted < MAX_RETRIES:
+        if gbpusd_n_times_restarted < MAX_RETRIES:
             tl.logger.error(f'GBPUSD price api error: {e}\nRestarting...')
             gbpusd_api.restart()
-            gbpusd_n_restarted += 1
+            gbpusd_n_times_restarted += 1
     else:
         if gbpusd_price:
             gbpusd_prices_list.append(gbpusd_price)
-        gbpusd_n_restarted = 0
+        gbpusd_n_times_restarted = 0
 
-    if gbpusd_n_restarted >= MAX_RETRIES:
+    if gbpusd_n_times_restarted >= MAX_RETRIES:
         # TODO Send email / sms / notification
         return
 
@@ -229,13 +235,13 @@ def gbpusd_update():
 # TODO
 @tl.job(interval=datetime.timedelta(minutes=5))
 def check_internet_connection():
-    global dax_n_restarted
-    global eurusd_n_restarted
-    global gbpusd_n_restarted
+    global dax_n_times_restarted
+    global eurusd_n_times_restarted
+    global gbpusd_n_times_restarted
 
-    dax_n_restarted = 0
-    eurusd_n_restarted = 0
-    gbpusd_n_restarted = 0
+    dax_n_times_restarted = 0
+    eurusd_n_times_restarted = 0
+    gbpusd_n_times_restarted = 0
 
 
 if __name__ == '__main__':

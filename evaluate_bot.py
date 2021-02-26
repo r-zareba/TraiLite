@@ -6,17 +6,16 @@ import sys
 sys.path.insert(0, './databases')
 
 from databases.mongo.mongo_manager import MongoPricesManager, MongoTransactionsManager
-
-MONGO_HOST = 'mongodb://localhost:27017/'
+from settings import MONGO_HOST
 
 
 def main(args):
     asset = args.asset
-    prices_manager = MongoPricesManager(asset, host=MONGO_HOST)
-    transactions_manager = MongoTransactionsManager(asset, host=MONGO_HOST)
+    prices_manager = MongoPricesManager(MONGO_HOST, asset)
+    transactions_logger = MongoTransactionsManager(MONGO_HOST, asset)
 
     prices_df = prices_manager.get_n_last_ohlc(1000)
-    tdf = transactions_manager.get_n_last_transactions(1000)
+    tdf = transactions_logger.get_n_last_transactions(1000)
 
     longs = tdf.loc[tdf['Comment'] == 'Long', :]
     closing_longs = tdf.loc[tdf['Comment'] == 'Closing Long', :]

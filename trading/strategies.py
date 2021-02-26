@@ -4,7 +4,7 @@ from datetime import datetime as dt
 from . import indicators_readers
 
 
-class BaseStrategy:
+class Strategy(abc.ABC):
     """
     Implementation of Strategies Abstract class
     Contains logic for making transactions
@@ -81,7 +81,7 @@ class BaseStrategy:
         return 0
 
 
-class StochasticOscillatorStrategy(BaseStrategy):
+class StochasticOscillatorStrategy(Strategy):
     __slots__ = ('_long_stoch_threshold', '_short_stoch_threshold')
 
     def __init__(self, asset: str, enter_interval: str, exit_interval: str,

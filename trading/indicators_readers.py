@@ -16,7 +16,7 @@ n_minutes_dict = {
 }
 
 
-class BaseIndicatorReader:
+class IndicatorReader(abc.ABC):
     """
     Technical Indicator live monitor abstract class
     """
@@ -82,7 +82,7 @@ class BaseIndicatorReader:
         return True
 
 
-class StochasticOscillatorReader(BaseIndicatorReader):
+class StochasticOscillatorReader(IndicatorReader):
 
     __slots__ = ('_enter_k_period', '_enter_smooth', '_enter_d_period',
                  '_exit_k_period', '_exit_smooth', '_exit_d_period')

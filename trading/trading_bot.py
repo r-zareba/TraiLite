@@ -1,9 +1,7 @@
-import datetime
 
-from . import broker_api
-from . import strategies
-
-from databases.mongo.mongo_manager import MongoTransactionsManager
+from .broker_api import BrokerAPI
+from .strategies import Strategy
+from databases.transactions_manager import TransactionsManager
 
 
 class TradingBot:
@@ -11,19 +9,20 @@ class TradingBot:
     Implementation of fully automated trading bot
     It needs to be initialized with strategy and broker api objects
 
-    take_action - periodic tasks that should be handled by asynchrounous
-    agent - Celery by default
+    take_action - periodic tasks that should be handled by some periodic task agent
+    (Timeloop, Celery etc...)
     """
     __slots__ = ('_asset', '_strategy_object', '_broker_api_object',
                  '_transactions_logger', '_current_position', '_position_size',
                  '_is_broker_api_initialized')
 
-    def __init__(self, strategy_object: strategies.BaseStrategy,
-                 broker_api_object: broker_api.BaseBrokerAPI):
+    def __init__(self, strategy_object: Strategy, broker_api_object: BrokerAPI,
+                 transactions_manager: TransactionsManager):
 
         self._strategy_object = strategy_object
         self._asset = self._strategy_object.asset
         self._broker_api_object = broker_api_object
+        self._transactions_logger = transactions_manager
 
         # TODO
         self._position_size: int = 100
@@ -63,5 +62,4 @@ class TradingBot:
         return current_position
 
     def _log_action(self, action: int, comment: str) -> None:
-        tx_logger = MongoTransactionsManager(self._asset)
-        tx_logger.log(action=action, comment=comment)
+        self._transactions_logger.log(action=action, comment=comment)

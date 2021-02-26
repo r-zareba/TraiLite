@@ -238,14 +238,15 @@ class StochasticOscilatorBacktester(BaseTechnicalsBacktester):
 # import objsize
 
 
-# path = '/Users/kq794tb/Desktop/datasets/EURUSD_bid.csv'
-# strategy = StochasticOscilatorBacktester(
-#     enter_interval='1T', exit_interval='5T', start_hour=8, end_hour=16,
-#     fee=0.00015, enter_k_period=14, enter_smooth=3, enter_d_period=3,
-#     exit_k_period=14, exit_smooth=3, exit_d_period=3, stoch_long_threshold=20,
-#     stoch_short_threshold=80)
-#
-# strategy.fit_from_file(path, 'dukascopy')
+path = '/Users/kq794tb/Desktop/TRAI_Lite/EURUSD_bid.csv'
+strategy = StochasticOscilatorBacktester(
+    enter_interval='1T', exit_interval='5T', start_hour=8, end_hour=16,
+    fee=0.00015, enter_k_period=14, enter_smooth=3, enter_d_period=3,
+    exit_k_period=14, exit_smooth=3, exit_d_period=3, stoch_long_threshold=20,
+    stoch_short_threshold=80)
+
+strategy.fit_from_file(path, 'dukascopy')
+print(strategy.strategy_return)
 
 
 

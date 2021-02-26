@@ -8,7 +8,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 
-class BaseBrokerAPI:
+class BrokerAPI(abc.ABC):
     """ Implementation of abstract broker API """
     __slots__ = ('_auth_file_path', '_current_asset', '_username', 'is_ready')
 
@@ -35,7 +35,7 @@ class BaseBrokerAPI:
         pass
 
 
-class CMCMarketsAPI(BaseBrokerAPI):
+class CMCMarketsAPI(BrokerAPI):
     """ Implementation of CMC Markets Broker """
     __slots__ = ('_driver', )
 
