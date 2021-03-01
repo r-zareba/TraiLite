@@ -4,11 +4,12 @@ import datetime as dt
 import pandas as pd
 import pymongo
 
+from databases.indicators_manager import StochasticIndicatorManager
 from databases.ohlc import OHLC
 from databases.prices_manager import PricesManager
 from databases.transactions_manager import TransactionsManager
 from databases.utils import SharedBetweenInstances
-from databases.mongo.config import PRICES_COLLECTION_NAME, TRANSACTIONS_COLLECTION_NAME
+from databases.mongo.config import PRICES_DB_NAME, TRANSACTIONS_DB_NAME, STOCHASTIC_INDICATOR_DB_NAME
 
 
 class MongoManager(abc.ABC):
@@ -41,7 +42,7 @@ class MongoPricesManager(MongoManager, PricesManager):
     def __init__(self, host: str, asset: str):
         super().__init__(host)
         self._asset = asset
-        self._database = self._mongo_client[PRICES_COLLECTION_NAME]
+        self._database = self._mongo_client[PRICES_DB_NAME]
         self._collection = self._database[self._asset]
 
     def insert_ohlc(self, ohlc: OHLC) -> None:
@@ -54,7 +55,6 @@ class MongoPricesManager(MongoManager, PricesManager):
         self._collection.insert_one(ohlc_to_insert)
 
     def get_n_last_ohlc(self, n: int) -> pd.DataFrame:
-
         return self.get_n_last_records(n)
 
 
@@ -65,7 +65,7 @@ class MongoTransactionsManager(MongoManager, TransactionsManager):
     def __init__(self, host: str, asset: str):
         super().__init__(host)
         self._asset = asset
-        self._database = self._mongo_client[TRANSACTIONS_COLLECTION_NAME]
+        self._database = self._mongo_client[TRANSACTIONS_DB_NAME]
         self._collection = self._database[asset]
 
     def log(self, action: int, comment: str) -> None:
@@ -90,3 +90,28 @@ class MongoTransactionsManager(MongoManager, TransactionsManager):
                 return 1
             elif 'short' in last_transaction['Comment'].str.lower().values[0]:
                 return -1
+
+
+class MongoStochasticIndicatorManager(MongoManager, StochasticIndicatorManager):
+    _mongo_client = SharedBetweenInstances()
+    _database = SharedBetweenInstances()
+
+    def __init__(self, host: str, asset: str):
+        super().__init__(host)
+        self._asset = asset
+        self._database = self._mongo_client[STOCHASTIC_INDICATOR_DB_NAME]
+        self._collection = self._database[asset]
+
+    def log(self, enter_k: int, enter_d: int, exit_k: int, exit_d: int):
+        self._collection.insert_one({
+            'Timestamp': dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'Enter_K': round(enter_k, 2),
+            'Enter_D': round(enter_d, 2),
+            'Exit_K': round(exit_k, 2),
+            'Exit_D': round(exit_d, 2)})
+
+    def get_n_last_indicators(self, n: int) -> pd.DataFrame:
+        return self.get_n_last_records(n)
+
+
+

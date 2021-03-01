@@ -1,6 +1,8 @@
 import abc
 from datetime import datetime as dt
 
+from databases.indicators_manager import IndicatorManager, StochasticIndicatorManager
+from databases.prices_manager import PricesManager
 from . import indicators_readers
 
 
@@ -9,18 +11,16 @@ class Strategy(abc.ABC):
     Implementation of Strategies Abstract class
     Contains logic for making transactions
     """
-    __slots__ = ('_asset', '_enter_interval', '_exit_interval', '_start_hour',
-                 '_end_hour', '_indicator_reader', '_enter_minute',
-                 '_exit_minute')
-
     def __init__(self, asset: str, enter_interval: str, exit_interval: str,
-                 start_hour: int, end_hour: int) -> None:
+                 start_hour: int, end_hour: int):
         self._asset = asset
         self._enter_interval = enter_interval
         self._exit_interval = exit_interval
         self._start_hour = start_hour
         self._end_hour = end_hour
 
+        self._prices_manager = None
+        self._indicator_manager = None
         self._indicator_reader = None
 
         self._enter_minute = indicators_readers.n_minutes_dict[enter_interval]
@@ -82,20 +82,19 @@ class Strategy(abc.ABC):
 
 
 class StochasticOscillatorStrategy(Strategy):
-    __slots__ = ('_long_stoch_threshold', '_short_stoch_threshold')
-
     def __init__(self, asset: str, enter_interval: str, exit_interval: str,
                  start_hour: int, end_hour: int, enter_k_period: int,
                  enter_smooth: int, enter_d_period: int, exit_k_period: int,
-                 exit_smooth: int, exit_d_period: int,
-                 long_stoch_threshold: float, short_stoch_threshold: float):
+                 exit_smooth: int, exit_d_period: int, long_stoch_threshold: float,
+                 short_stoch_threshold: float, prices_manager: PricesManager,
+                 indicator_manager: StochasticIndicatorManager):
         super().__init__(asset, enter_interval, exit_interval,
                          start_hour, end_hour)
 
         self._indicator_reader = indicators_readers.StochasticOscillatorReader(
             self._asset, self._enter_interval, self._exit_interval,
             enter_k_period, enter_smooth, enter_d_period, exit_k_period,
-            exit_smooth, exit_d_period)
+            exit_smooth, exit_d_period, prices_manager, indicator_manager)
         self._long_stoch_threshold = long_stoch_threshold
         self._short_stoch_threshold = short_stoch_threshold
 

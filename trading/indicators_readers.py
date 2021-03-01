@@ -1,10 +1,10 @@
 import abc
 import pandas as pd
 
-from databases.mongo.mongo_manager import MongoPricesManager
+from databases.indicators_manager import StochasticIndicatorManager, IndicatorManager
+from databases.prices_manager import PricesManager
 from trading_indicators import technical_indicators
 from data_preprocessing import market_data_preprocessing
-from settings import MONGO_HOST
 
 
 n_minutes_dict = {
@@ -17,28 +17,26 @@ n_minutes_dict = {
 
 
 class IndicatorReader(abc.ABC):
-    """
-    Technical Indicator live monitor abstract class
-    """
+    """ Technical Indicator live monitor abstract class """
     __slots__ = ('_asset', '_enter_interval', '_exit_interval',
                  '_num_of_enter_m1', '_num_of_exit_m1', '_necessary_num_of_m1',
                  '_price_reader', '_n_ohlc_to_download', '_enter_df',
                  '_exit_df', '_are_indicators_calculated')
 
-    def __init__(self, asset: str, enter_interval: str,
-                 exit_interval: str) -> None:
+    def __init__(self, asset: str, enter_interval: str, exit_interval: str,
+                 prices_manager: PricesManager, indicator_manager: IndicatorManager):
         self._asset = asset
         self._enter_interval = enter_interval
         self._exit_interval = exit_interval
+        self._price_reader = prices_manager
+        self._indicator_manager = indicator_manager
 
         self._num_of_enter_m1: int = n_minutes_dict[self._enter_interval]
         self._num_of_exit_m1: int = n_minutes_dict[self._exit_interval]
         self._necessary_num_of_m1: int = max(self._num_of_enter_m1,
                                              self._num_of_exit_m1)
 
-        self._price_reader = MongoPricesManager(MONGO_HOST, self._asset)
         self._n_ohlc_to_download: int = self._get_n_ohlc_to_download()
-
         self._enter_df = pd.DataFrame()
         self._exit_df = pd.DataFrame()
         self._are_indicators_calculated: bool = False
@@ -66,12 +64,9 @@ class IndicatorReader(abc.ABC):
     def _market_data_updated(self) -> bool:
         """
         Checks if ohlc received from price reader is long enough
-        to calculate market dataframes
-        :return: True of False
+        to calculate necessary market dataframes
         """
-        market_data = self._price_reader.get_n_last_ohlc(
-            self._n_ohlc_to_download)
-
+        market_data = self._price_reader.get_n_last_ohlc(self._n_ohlc_to_download)
         if len(market_data) < self._n_ohlc_to_download:
             return False
 
@@ -83,14 +78,13 @@ class IndicatorReader(abc.ABC):
 
 
 class StochasticOscillatorReader(IndicatorReader):
-
     __slots__ = ('_enter_k_period', '_enter_smooth', '_enter_d_period',
                  '_exit_k_period', '_exit_smooth', '_exit_d_period')
 
     def __init__(self, asset: str, enter_interval: str, exit_interval: str,
                  enter_k_period: int, enter_smooth: int, enter_d_period: int,
-                 exit_k_period: int, exit_smooth: int,
-                 exit_d_period: int) -> None:
+                 exit_k_period: int, exit_smooth: int, exit_d_period: int,
+                 prices_manager: PricesManager, indicator_manager: StochasticIndicatorManager):
 
         self._enter_k_period = enter_k_period
         self._enter_smooth = enter_smooth
@@ -98,7 +92,7 @@ class StochasticOscillatorReader(IndicatorReader):
         self._exit_k_period = exit_k_period
         self._exit_smooth = exit_smooth
         self._exit_d_period = exit_d_period
-        super().__init__(asset, enter_interval, exit_interval)
+        super().__init__(asset, enter_interval, exit_interval, prices_manager, indicator_manager)
 
     # TODO properties for testing - remove later
     @property
@@ -110,7 +104,6 @@ class StochasticOscillatorReader(IndicatorReader):
         return self._exit_df
 
     def _get_n_ohlc_to_download(self) -> int:
-
         necessary_periods = max(
             self._enter_k_period, self._enter_d_period,
             self._exit_k_period, self._exit_d_period)
@@ -131,6 +124,12 @@ class StochasticOscillatorReader(IndicatorReader):
                 k_period=self._exit_k_period,
                 smooth=self._exit_smooth,
                 d_period=self._exit_d_period)
+
+            self._indicator_manager.log(
+                enter_k=self.current_enter_k,
+                enter_d=self.current_enter_d,
+                exit_k=self.current_exit_k,
+                exit_d=self.current_exit_d)
 
             if not self._are_indicators_calculated:
                 self._are_indicators_calculated = True
