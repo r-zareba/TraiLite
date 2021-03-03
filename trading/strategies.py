@@ -32,11 +32,11 @@ class Strategy(abc.ABC):
 
     def _check_enter_interval(self) -> bool:
         current_minute = dt.now().minute
-        return current_minute % self._enter_minute == 0
+        return current_minute % self._enter_minute == 1
 
     def _check_exit_interval(self) -> bool:
         current_minute = dt.now().minute
-        return current_minute % self._exit_minute == 0
+        return current_minute % self._exit_minute == 1
 
     @abc.abstractmethod
     def _got_take_long_signal(self) -> bool:
