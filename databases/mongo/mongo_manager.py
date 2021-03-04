@@ -9,26 +9,24 @@ from databases.ohlc import OHLC
 from databases.prices_manager import PricesManager
 from databases.transactions_manager import TransactionsManager
 from databases.utils import SharedBetweenInstances
-from databases.mongo.config import PRICES_DB_NAME, TRANSACTIONS_DB_NAME, STOCHASTIC_INDICATOR_DB_NAME
+from databases.mongo.config import DB_NAME, PRICES_COLLECTION_NAME, TRANSACTIONS_COLLECTION_NAME, STOCHASTIC_COLLECTION_NAME
 
 
 class MongoManager(abc.ABC):
     def __init__(self, host: str):
         self._mongo_client = pymongo.MongoClient(host)
-        self._asset = None
-        self._database = None
+        self._database = self._mongo_client[DB_NAME]
         self._collection = None
 
-    def get_n_last_records(self, n: int) -> pd.DataFrame:
+    def get_n_last_records(self, n: int, asset: str) -> pd.DataFrame:
         """
         Gets n last records from object MongoDB collection
         Returns it as pandas Dataframe
         """
-        df = pd.DataFrame(
-            list(self._collection.find().limit(n).sort('$natural', -1)))
+        df = pd.DataFrame(list(self._collection.find({'Asset': asset}).limit(n).sort('$natural', -1)))
         if df.empty:
-            raise ValueError(f'\'{self._asset}\' does not have records in '
-                             f'\'{self._database.name}\' database!')
+            raise ValueError(f'\'{asset}\' does not have records in '
+                             f'\'{self._collection.name}\' collection!')
 
         df.set_index(pd.DatetimeIndex(df['Timestamp']), inplace=True)
         df.drop('Timestamp', axis=1, inplace=True)
@@ -38,49 +36,48 @@ class MongoManager(abc.ABC):
 class MongoPricesManager(MongoManager, PricesManager):
     _mongo_client = SharedBetweenInstances()
     _database = SharedBetweenInstances()
+    _collection = SharedBetweenInstances()
 
-    def __init__(self, host: str, asset: str):
+    def __init__(self, host: str):
         super().__init__(host)
-        self._asset = asset
-        self._database = self._mongo_client[PRICES_DB_NAME]
-        self._collection = self._database[self._asset]
+        self._collection = self._database[PRICES_COLLECTION_NAME]
 
-    def insert_ohlc(self, ohlc: OHLC) -> None:
+    def insert_ohlc(self, ohlc: OHLC, asset: str):
         ohlc_to_insert = {
             'Timestamp': ohlc.timestamp,
             'Open': ohlc.open,
             'High': ohlc.high,
             'Low': ohlc.low,
-            'Close': ohlc.close}
+            'Close': ohlc.close,
+            'Asset': asset}
         self._collection.insert_one(ohlc_to_insert)
 
-    def get_n_last_ohlc(self, n: int) -> pd.DataFrame:
-        return self.get_n_last_records(n)
+    def get_n_last_ohlc(self, n: int, asset: str) -> pd.DataFrame:
+        return self.get_n_last_records(n, asset)
 
 
 class MongoTransactionsManager(MongoManager, TransactionsManager):
     _mongo_client = SharedBetweenInstances()
     _database = SharedBetweenInstances()
+    _collection = SharedBetweenInstances()
 
-    def __init__(self, host: str, asset: str):
+    def __init__(self, host: str):
         super().__init__(host)
-        self._asset = asset
-        self._database = self._mongo_client[TRANSACTIONS_DB_NAME]
-        self._collection = self._database[asset]
+        self._collection = self._database[TRANSACTIONS_COLLECTION_NAME]
 
-    def log(self, action: int, comment: str) -> None:
-        """ Inserts trading transaction to MongoDB transactions database """
+    def log(self, action: int, comment: str, asset: str):
         self._collection.insert_one({
             'Timestamp': dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             'Action': action,
-            'Comment': comment})
+            'Comment': comment,
+            'Asset': asset})
 
-    def get_n_last_transactions(self, n: int) -> pd.DataFrame:
-        return self.get_n_last_records(n)
+    def get_n_last_transactions(self, n: int, asset) -> pd.DataFrame:
+        return self.get_n_last_records(n, asset)
 
-    def get_current_position(self) -> int:
+    def get_current_position(self, asset: str) -> int:
         try:
-            last_transaction = self.get_n_last_transactions(1)
+            last_transaction = self.get_n_last_transactions(1, asset)
         except Exception as e:
             return 0
         else:
@@ -95,23 +92,23 @@ class MongoTransactionsManager(MongoManager, TransactionsManager):
 class MongoStochasticIndicatorManager(MongoManager, StochasticIndicatorManager):
     _mongo_client = SharedBetweenInstances()
     _database = SharedBetweenInstances()
+    _collection = SharedBetweenInstances()
 
-    def __init__(self, host: str, asset: str):
+    def __init__(self, host: str):
         super().__init__(host)
-        self._asset = asset
-        self._database = self._mongo_client[STOCHASTIC_INDICATOR_DB_NAME]
-        self._collection = self._database[asset]
+        self._collection = self._database[STOCHASTIC_COLLECTION_NAME]
 
-    def log(self, enter_k: int, enter_d: int, exit_k: int, exit_d: int):
+    def log(self, asset: str, enter_k: int, enter_d: int, exit_k: int, exit_d: int):
         self._collection.insert_one({
             'Timestamp': dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             'Enter_K': round(enter_k, 2),
             'Enter_D': round(enter_d, 2),
             'Exit_K': round(exit_k, 2),
-            'Exit_D': round(exit_d, 2)})
+            'Exit_D': round(exit_d, 2),
+            'Asset': asset})
 
-    def get_n_last_indicators(self, n: int) -> pd.DataFrame:
-        return self.get_n_last_records(n)
+    def get_n_last_indicators(self, n: int, asset: str) -> pd.DataFrame:
+        return self.get_n_last_records(n, asset)
 
 
 

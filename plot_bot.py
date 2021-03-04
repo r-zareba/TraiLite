@@ -8,13 +8,13 @@ from settings import MONGO_HOST
 
 
 def main(asset: str, n_last: int):
-    prices_manager = MongoPricesManager(MONGO_HOST, asset)
-    transactions_logger = MongoTransactionsManager(MONGO_HOST, asset)
-    indicator_manager = MongoStochasticIndicatorManager(MONGO_HOST, asset)
+    prices_manager = MongoPricesManager(MONGO_HOST)
+    transactions_logger = MongoTransactionsManager(MONGO_HOST)
+    indicator_manager = MongoStochasticIndicatorManager(MONGO_HOST)
 
-    prices_df = prices_manager.get_n_last_ohlc(n_last)
-    tdf = transactions_logger.get_n_last_transactions(n_last)
-    indicators = indicator_manager.get_n_last_indicators(n_last)
+    prices_df = prices_manager.get_n_last_ohlc(n_last, asset)
+    tdf = transactions_logger.get_n_last_transactions(n_last, asset)
+    indicators = indicator_manager.get_n_last_indicators(n_last, asset)
 
     longs = tdf.loc[tdf['Comment'] == 'Long', :]
     closing_longs = tdf.loc[tdf['Comment'] == 'Closing Long', :]

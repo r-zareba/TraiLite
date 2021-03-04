@@ -39,7 +39,7 @@ class IndicatorReader(abc.ABC):
         self._n_ohlc_to_download: int = self._get_n_ohlc_to_download()
         self._enter_df = pd.DataFrame()
         self._exit_df = pd.DataFrame()
-        self._are_indicators_calculated: bool = False
+        self._are_indicators_calculated = False
 
     @property
     def hour(self) -> int:
@@ -66,7 +66,7 @@ class IndicatorReader(abc.ABC):
         Checks if ohlc received from price reader is long enough
         to calculate necessary market dataframes
         """
-        market_data = self._price_reader.get_n_last_ohlc(self._n_ohlc_to_download)
+        market_data = self._price_reader.get_n_last_ohlc(self._n_ohlc_to_download, self._asset)
         if len(market_data) < self._n_ohlc_to_download:
             return False
 
@@ -129,7 +129,8 @@ class StochasticOscillatorReader(IndicatorReader):
                 enter_k=self.current_enter_k,
                 enter_d=self.current_enter_d,
                 exit_k=self.current_exit_k,
-                exit_d=self.current_exit_d)
+                exit_d=self.current_exit_d,
+                asset=self._asset)
 
             if not self._are_indicators_calculated:
                 self._are_indicators_calculated = True

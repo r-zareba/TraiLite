@@ -1,7 +1,7 @@
 import abc
 from datetime import datetime as dt
 
-from databases.indicators_manager import IndicatorManager, StochasticIndicatorManager
+from databases.indicators_manager import StochasticIndicatorManager
 from databases.prices_manager import PricesManager
 from . import indicators_readers
 

@@ -62,4 +62,4 @@ class TradingBot:
         return current_position
 
     def _log_action(self, action: int, comment: str) -> None:
-        self._transactions_logger.log(action=action, comment=comment)
+        self._transactions_logger.log(action=action, comment=comment, asset=self._asset)

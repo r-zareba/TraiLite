@@ -8,18 +8,17 @@ class IndicatorManager(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def get_n_last_indicators(self, n: int) -> pd.DataFrame:
+    def get_n_last_indicators(self, n: int, asset: str) -> pd.DataFrame:
         pass
 
 
 class StochasticIndicatorManager(IndicatorManager):
-    """ Database trading indicators logger interface """
     @abc.abstractmethod
-    def log(self, enter_k: float, enter_d: float, exit_k: float, exit_d: float):
+    def log(self, asset: str, enter_k: float, enter_d: float, exit_k: float, exit_d: float):
         pass
 
     @abc.abstractmethod
-    def get_n_last_indicators(self, n: int) -> pd.DataFrame:
+    def get_n_last_indicators(self, n: int, asset: str) -> pd.DataFrame:
         pass
 
 

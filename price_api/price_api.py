@@ -1,5 +1,4 @@
 import abc
-
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
@@ -13,7 +12,7 @@ from selenium.common.exceptions import (InvalidSessionIdException,
 import settings
 
 
-class BasePriceAPI(abc.ABC):
+class PriceAPI(abc.ABC):
     """ Price Api interface """
     __slots__ = ('_asset', 'is_ready')
 
@@ -23,12 +22,12 @@ class BasePriceAPI(abc.ABC):
         """ Required class static attribute """
         pass
 
-    def __init__(self, asset: str) -> None:
+    def __init__(self, asset: str):
         self._asset = asset
         self.is_ready = False
 
     @abc.abstractmethod
-    def init(self) -> None:
+    def init(self):
         pass
 
     @abc.abstractmethod
@@ -36,16 +35,16 @@ class BasePriceAPI(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def close(self) -> None:
+    def close(self):
         pass
 
     @abc.abstractmethod
-    def restart(self) -> None:
+    def restart(self):
         pass
 
 
-class TradingViewAPI(BasePriceAPI):
-    """ Implementation of Trading View prices using Selenium """
+class TradingViewAPI(PriceAPI):
+    """ Implementation of Trading View prices API using Selenium webdriver """
     __slots__ = ('_asset_url', '_driver', '_price_element')
 
     PriceAPIExceptions = (
@@ -56,15 +55,15 @@ class TradingViewAPI(BasePriceAPI):
         StaleElementReferenceException)
 
     price_url = 'https://www.tradingview.com/symbols/'
-    price_xpath = '/html/body/div[2]/div[5]/div/header/div/div[3]/div[1]/div/div/div/div[1]/div[1]'
+    price_xpath = '/html/body/div[2]/div[4]/div/header/div/div[3]/div[1]/div/div/div/div[1]/div[1]'
 
-    def __init__(self, asset: str) -> None:
+    def __init__(self, asset: str):
         super().__init__(asset)
         self._asset_url: str = self.price_url + self._asset
         self._driver: webdriver = None
         self._price_element = None
 
-    def init(self) -> None:
+    def init(self):
         """ Sets the driver and price element - prepares for price reading """
         if not self.is_ready:
             self._set_driver()
@@ -75,16 +74,16 @@ class TradingViewAPI(BasePriceAPI):
         if self.is_ready and self._price_element.text:
             return float(self._price_element.text)
 
-    def close(self) -> None:
+    def close(self):
         if self._driver.service.process:
             self._driver.quit()
             self.is_ready = False
 
-    def restart(self) -> None:
+    def restart(self):
         self.close()
         self.init()
 
-    def _set_driver(self) -> None:
+    def _set_driver(self):
         """ Set Firefox webdriver """
         options = Options()
         options.set_preference('dom.webnotifications.enabled', False)
@@ -97,19 +96,17 @@ class TradingViewAPI(BasePriceAPI):
                 executable_path='./geckodriver', options=options)
         self._driver = driver
 
-    def _set_price_element(self) -> None:
+    def _set_price_element(self):
         """ Set price element to read """
         self._driver.get(self._asset_url)
         try:
-            WebDriverWait(self._driver, 15).until(
-                EC.presence_of_element_located((By.XPATH, self.price_xpath)))
+            WebDriverWait(self._driver, 15).until(EC.presence_of_element_located((By.XPATH, self.price_xpath)))
         except TimeoutException:
             print(f'Price element not found!\nError occured in: {self}')
             print('Closing current session...')
             self.close()
         else:
-            self._price_element = self._driver.find_element(
-                By.XPATH, self.price_xpath)
+            self._price_element = self._driver.find_element(By.XPATH, self.price_xpath)
 
 
 class PriceAPIFactory:
@@ -117,11 +114,10 @@ class PriceAPIFactory:
     __slots__ = ()
 
     @staticmethod
-    def get_price_api(asset: str) -> BasePriceAPI:
-        """
-        Returns Price API object, that had succesfully set price element """
-        for PriceAPI in BasePriceAPI.__subclasses__():
-            price_api = PriceAPI(asset)
+    def get_price_api(asset: str) -> PriceAPI:
+        """ Returns Price API object, that had succesfully set price element """
+        for APIClass in PriceAPI.__subclasses__():
+            price_api = APIClass(asset)
             price_api.init()
 
             if price_api.is_ready:
