@@ -55,7 +55,7 @@ class TradingViewAPI(PriceAPI):
         StaleElementReferenceException)
 
     price_url = 'https://www.tradingview.com/symbols/'
-    price_xpath = '/html/body/div[2]/div[4]/div/header/div/div[3]/div[1]/div/div/div/div[1]/div[1]'
+    price_xpath = '/html/body/div[2]/div[5]/div/header/div/div[3]/div[1]/div/div/div/div[1]/div[1]'
 
     def __init__(self, asset: str):
         super().__init__(asset)
