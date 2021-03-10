@@ -124,3 +124,45 @@ class StochasticOscillatorStrategy(Strategy):
 
         return (self._indicator_reader.current_exit_k > self._indicator_reader.current_exit_d) & \
                (self._indicator_reader.previous_exit_k < self._indicator_reader.previous_exit_d)
+
+
+class StochasticExtendedStrategy(StochasticOscillatorStrategy):
+    def __init__(self, asset: str, enter_interval: str, exit_interval: str, start_hour: int, end_hour: int,
+                 enter_k_period: int, enter_smooth: int, enter_d_period: int, exit_k_period: int,
+                 exit_smooth: int, exit_d_period: int, long_stoch_threshold: float, short_stoch_threshold: float,
+                 prices_manager: PricesManager, indicator_manager: StochasticIndicatorManager):
+        super().__init__(asset, enter_interval, exit_interval, start_hour, end_hour, enter_k_period, enter_smooth,
+                         enter_d_period, exit_k_period, exit_smooth, exit_d_period, long_stoch_threshold,
+                         short_stoch_threshold, prices_manager, indicator_manager)
+
+    def _got_take_long_signal(self) -> bool:
+        return (self._indicator_reader.current_enter_k > self._indicator_reader.current_enter_d) & \
+               (self._indicator_reader.previous_enter_k < self._indicator_reader.previous_enter_d) & \
+               (self._indicator_reader.current_exit_k < self._short_stoch_threshold) & \
+               (self._indicator_reader.current_enter_k < self._long_stoch_threshold) & \
+               (self._indicator_reader.hour >= self._start_hour) & \
+               (self._indicator_reader.hour <= self._end_hour)
+
+    def _got_close_long_signal(self) -> bool:
+        if self._indicator_reader.hour >= self._end_hour:
+            return True
+
+        return (self._indicator_reader.current_exit_k < self._indicator_reader.current_exit_d) & \
+               (self._indicator_reader.previous_exit_k > self._indicator_reader.previous_exit_d) & \
+               (self._indicator_reader.current_exit_k > self._short_stoch_threshold)
+
+    def _got_take_short_signal(self) -> bool:
+        return (self._indicator_reader.current_enter_k < self._indicator_reader.current_enter_d) & \
+               (self._indicator_reader.previous_enter_k > self._indicator_reader.previous_enter_d) & \
+               (self._indicator_reader.current_exit_k > self._long_stoch_threshold) & \
+               (self._indicator_reader.current_enter_k > self._short_stoch_threshold) & \
+               (self._indicator_reader.hour >= self._start_hour) & \
+               (self._indicator_reader.hour <= self._end_hour)
+
+    def _got_close_short_signal(self) -> bool:
+        if self._indicator_reader.hour >= self._end_hour:
+            return True
+
+        return (self._indicator_reader.current_exit_k > self._indicator_reader.current_exit_d) & \
+               (self._indicator_reader.previous_exit_k < self._indicator_reader.previous_exit_d) & \
+               (self._indicator_reader.current_exit_k < self._long_stoch_threshold)

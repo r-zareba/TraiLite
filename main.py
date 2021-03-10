@@ -82,7 +82,7 @@ gbpusd_prices_list = list()
 gbpusd_position = transactions_manager.get_current_position('GBPUSD')
 gbpusd_n_times_restarted = 0
 gbpusd_api = price_api.PriceAPIFactory.get_price_api(asset='GBPUSD')
-gbpusd_strategy = strategies.StochasticOscillatorStrategy(
+gbpusd_strategy = strategies.StochasticExtendedStrategy(
     asset='GBPUSD',
     enter_interval='5T',
     exit_interval='5T',
