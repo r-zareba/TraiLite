@@ -11,8 +11,7 @@ class Strategy(abc.ABC):
     Implementation of Strategies Abstract class
     Contains logic for making transactions
     """
-    def __init__(self, asset: str, enter_interval: str, exit_interval: str,
-                 start_hour: int, end_hour: int):
+    def __init__(self, asset: str, enter_interval: str, exit_interval: str, start_hour: int, end_hour: int):
         self._asset = asset
         self._enter_interval = enter_interval
         self._exit_interval = exit_interval
@@ -82,12 +81,10 @@ class Strategy(abc.ABC):
 
 
 class StochasticOscillatorStrategy(Strategy):
-    def __init__(self, asset: str, enter_interval: str, exit_interval: str,
-                 start_hour: int, end_hour: int, enter_k_period: int,
-                 enter_smooth: int, enter_d_period: int, exit_k_period: int,
-                 exit_smooth: int, exit_d_period: int, long_stoch_threshold: float,
-                 short_stoch_threshold: float, prices_manager: PricesManager,
-                 indicator_manager: StochasticIndicatorManager):
+    def __init__(self, asset: str, enter_interval: str, exit_interval: str, start_hour: int, end_hour: int,
+                 enter_k_period: int, enter_smooth: int, enter_d_period: int, exit_k_period: int,
+                 exit_smooth: int, exit_d_period: int, long_stoch_threshold: float, short_stoch_threshold: float,
+                 prices_manager: PricesManager, indicator_manager: StochasticIndicatorManager):
         super().__init__(asset, enter_interval, exit_interval,
                          start_hour, end_hour)
 
@@ -99,14 +96,10 @@ class StochasticOscillatorStrategy(Strategy):
         self._short_stoch_threshold = short_stoch_threshold
 
     def _got_take_long_signal(self) -> bool:
-        return (self._indicator_reader.current_enter_k >
-                self._indicator_reader.current_enter_d) & \
-               (self._indicator_reader.previous_enter_k <
-                self._indicator_reader.previous_enter_d) & \
-               (self._indicator_reader.current_exit_k >
-                self._indicator_reader.current_exit_d) & \
-               (self._indicator_reader.current_enter_k <
-                self._long_stoch_threshold) & \
+        return (self._indicator_reader.current_enter_k > self._indicator_reader.current_enter_d) & \
+               (self._indicator_reader.previous_enter_k < self._indicator_reader.previous_enter_d) & \
+               (self._indicator_reader.current_exit_k < self._short_stoch_threshold) & \
+               (self._indicator_reader.current_enter_k < self._long_stoch_threshold) & \
                (self._indicator_reader.hour >= self._start_hour) & \
                (self._indicator_reader.hour <= self._end_hour)
 
@@ -114,20 +107,14 @@ class StochasticOscillatorStrategy(Strategy):
         if self._indicator_reader.hour >= self._end_hour:
             return True
 
-        return (self._indicator_reader.current_exit_k <
-                self._indicator_reader.current_exit_d) & \
-               (self._indicator_reader.previous_exit_k >
-                self._indicator_reader.previous_exit_d)
+        return (self._indicator_reader.current_exit_k < self._indicator_reader.current_exit_d) & \
+               (self._indicator_reader.previous_exit_k > self._indicator_reader.previous_exit_d)
 
     def _got_take_short_signal(self) -> bool:
-        return (self._indicator_reader.current_enter_k <
-                self._indicator_reader.current_enter_d) & \
-               (self._indicator_reader.previous_enter_k >
-                self._indicator_reader.previous_enter_d) & \
-               (self._indicator_reader.current_exit_k <
-                self._indicator_reader.current_exit_d) & \
-               (self._indicator_reader.current_enter_k >
-                self._short_stoch_threshold) & \
+        return (self._indicator_reader.current_enter_k < self._indicator_reader.current_enter_d) & \
+               (self._indicator_reader.previous_enter_k > self._indicator_reader.previous_enter_d) & \
+               (self._indicator_reader.current_exit_k > self._long_stoch_threshold) & \
+               (self._indicator_reader.current_enter_k > self._short_stoch_threshold) & \
                (self._indicator_reader.hour >= self._start_hour) & \
                (self._indicator_reader.hour <= self._end_hour)
 
@@ -135,7 +122,5 @@ class StochasticOscillatorStrategy(Strategy):
         if self._indicator_reader.hour >= self._end_hour:
             return True
 
-        return (self._indicator_reader.current_exit_k >
-                self._indicator_reader.current_exit_d) & \
-               (self._indicator_reader.previous_exit_k <
-                self._indicator_reader.previous_exit_d)
+        return (self._indicator_reader.current_exit_k > self._indicator_reader.current_exit_d) & \
+               (self._indicator_reader.previous_exit_k < self._indicator_reader.previous_exit_d)
