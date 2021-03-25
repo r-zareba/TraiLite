@@ -27,7 +27,7 @@ class OHLC:
         self.print_color = print_color
 
     @classmethod
-    def from_prices_list(cls, prices_list: list, print_color: str):
+    def from_prices_list(cls, prices_list: list, print_color=Color.GREEN):
         shifted_time = dt.datetime.now() - dt.timedelta(minutes=1)
         return cls(timestamp=shifted_time.strftime('%Y-%m-%d %H:%M:%S'),
                    open=prices_list[0],
