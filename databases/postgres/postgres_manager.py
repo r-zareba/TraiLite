@@ -6,7 +6,7 @@ from databases.ohlc import OHLC
 
 class PostgresManager:
 
-    INIT_SQL_PATH = os.path.join('databases', 'postgres', 'db_init.sql')
+    INIT_SQL_PATH = os.path.join('databases', 'postgres', 'sql_scripts/db_schemas_init.sql')
     INSERT_OHLC_SQL = """
         INSERT INTO prices (timestamp, currency, open, high, low, close)
         VALUES (%s, %s, %s, %s, %s, %s)

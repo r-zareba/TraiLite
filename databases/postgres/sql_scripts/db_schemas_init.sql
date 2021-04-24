@@ -1,15 +1,32 @@
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'currency') THEN
-		CREATE TYPE currency AS ENUM (
-		  'EURUSD',
-		  'GBPUSD',
-		  'DAX'
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'asset') THEN
+		CREATE TYPE asset AS ENUM (
+		    'EURUSD',
+		    'GBPUSD',
+		    'DAX'
 		);
     END IF;
 END$$;
 
--- Alternative
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ohlc_interval') THEN
+		CREATE TYPE ohlc_interval AS ENUM (
+		    'M1',
+		    'M3'
+		    'M5',
+		    'M10',
+		    'M15',
+		    'M30',
+		    'H1',
+		    'H2',
+		    'H4'
+		);
+    END IF;
+END$$;
+
+-- Alternative type creation
 -- DO $$ BEGIN
 --     CREATE TYPE my_type AS (/* fields go here */);
 -- EXCEPTION
@@ -19,29 +36,34 @@ END$$;
 CREATE TABLE IF NOT EXISTS prices (
   id SERIAL PRIMARY KEY,
   timestamp TIMESTAMP DEFAULT (CURRENT_TIMESTAMP - (1 * interval '1 minute')),
-  currency currency NOT NULL,
+  asset asset NOT NULL,
   open REAL NOT NULL,
   high REAL NOT NULL,
   low REAL NOT NULL,
   close REAL NOT NULL
 );
 
--- CREATE TABLE "stochastic_oscillators" (
---   "id" SERIAL PRIMARY KEY,
---   "interval" varchar(5) NOT NULL,
---   "k_period" integer NOT NULL,
---   "smooth" integer NOT NULL,
---   "d_period" integer NOT NULL
--- );
---
--- CREATE TABLE "stochastic_values" (
---   "id" SERIAL PRIMARY KEY,
---   "oscillator_id" integer,
---   "currency" currency,
---   "timestamp" timestamp,
---   "k_value" double,
---   "d_value" double
--- );
+CREATE TABLE IF NOT EXISTS stochastic_oscillators (
+  id SERIAL PRIMARY KEY,
+  interval ohlc_interval NOT NULL,
+  k_period INTEGER NOT NULL,
+  smooth INTEGER NOT NULL,
+  d_period INTEGER NOT NULL
+);
+
+
+CREATE TABLE IF NOT EXISTS stochastic_values (
+  id SERIAL PRIMARY KEY,
+  stochastic_oscillator_id INTEGER NOT NULL,
+  currency currency,
+  timestamp timestamp DEFAULT CURRENT_TIMESTAMP,
+  k_value REAL NOT NULL,
+  d_value REAL NOT NULL,
+  CONSTRAINT fk_stochastic_oscillator
+      FOREIGN KEY(stochastic_oscillator_id)
+	  REFERENCES stochastic_oscillators(id)
+	  ON DELETE CASCADE
+);
 --
 -- CREATE TABLE "stochastic_strategies" (
 --   "id" SERIAL PRIMARY KEY,

@@ -1,6 +1,8 @@
 import psycopg2
+import pandas as pd
 
 from databases.ohlc import OHLC
+
 from utils import read_config
 
 from databases.postgres.postgres_manager import PostgresManager
@@ -12,21 +14,36 @@ postgres_manager.init(db_config)
 connection = postgres_manager._connection
 cursor = postgres_manager._db_cursor
 
-insert_statement = """
-INSERT INTO prices (currency, open, high, low, close) VALUES (%s, %s, %s, %s, %s) RETURNING id;
+sql_statement = """
+SELECT * FROM
+	(SELECT * FROM prices
+	WHERE currency = 'EURUSD'
+	ORDER BY timestamp DESC
+	LIMIT 36) AS last_prices
+ORDER BY TIMESTAMP;
 """
 
+k_period = 14
+smooth = 2
+d_period = 3
+
 try:
-    ohlc = OHLC.from_prices_list([1.1111, 1.1122, 1.1132])
-    postgres_manager.insert_ohlc('DAX', ohlc)
 
+    cursor.execute(sql_statement)
+    results = cursor.fetchall()
+    df = pd.DataFrame(results, columns=['id', 'timestamp', 'currency', 'Open', 'High', 'Low', 'Close'])
 
+    low = df['Low'].rolling(window=k_period).min()
+    high = df['High'].rolling(window=k_period).max()
 
-    # cursor.execute(insert_statement, ('EURUSD', 1.1192, 1.1111, 1.1100, 1.1212, ))
-    # # fetched = cursor.fetchone()
+    k_value = ((df['Close'] - low) / (high - low)) * 100
+    df.loc[:, 'K'] = k_value.rolling(window=smooth).mean()
+    df.loc[:, 'D'] = df['K'].rolling(window=d_period).mean()
+
     # # print(f'FETCHED : {fetched}')
     connection.commit()
 except Exception as e:
     print(e)
 finally:
     postgres_manager.close()
+
