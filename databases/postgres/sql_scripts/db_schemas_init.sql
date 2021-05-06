@@ -14,7 +14,7 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ohlc_interval') THEN
 		CREATE TYPE ohlc_interval AS ENUM (
 		    'M1',
-		    'M3'
+		    'M3',
 		    'M5',
 		    'M10',
 		    'M15',
@@ -55,8 +55,8 @@ CREATE TABLE IF NOT EXISTS stochastic_oscillators (
 CREATE TABLE IF NOT EXISTS stochastic_values (
   id SERIAL PRIMARY KEY,
   stochastic_oscillator_id INTEGER NOT NULL,
-  currency currency,
-  timestamp timestamp DEFAULT CURRENT_TIMESTAMP,
+  asset asset,
+  timestamp timestamp DEFAULT (CURRENT_TIMESTAMP - (1 * interval '1 minute')),
   k_value REAL NOT NULL,
   d_value REAL NOT NULL,
   CONSTRAINT fk_stochastic_oscillator
