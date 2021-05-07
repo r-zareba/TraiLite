@@ -49,90 +49,14 @@ BEGIN
 end $$;
 
 
-CREATE OR REPLACE FUNCTION get_stochastic(ohlc_interval ohlc_interval, asset_type asset, k_period INTEGER, smooth INTEGER, d_period INTEGER)
-RETURNS TABLE (
-                datetime TIMESTAMP,
-                k_value REAL,
-                d_value REAL
-              )
-LANGUAGE plpgsql
-AS $$
-DECLARE
-    extra_ohlc_buffer CONSTANT INTEGER := 20;
-	n_necessary_ohlc INTEGER;
-    window_lowest DOUBLE PRECISION;
-    window_highest DOUBLE PRECISION;
-    current_prices_count INTEGER;
-BEGIN
-
-    SELECT (GREATEST(k_period, d_period) * ohlc_interval_to_n_minutes(ohlc_interval)) + smooth + extra_ohlc_buffer
-    INTO n_necessary_ohlc;
-
-    SELECT COUNT(*) FROM prices
-    WHERE asset = asset_type
-    INTO current_prices_count;
-
-    IF NOT current_prices_count >= n_necessary_ohlc THEN
-        RETURN;
-    end if;
-
-    CREATE TEMP TABLE IF NOT EXISTS temp_stochastic ON COMMIT DROP AS
-        SELECT timestamp, high, low, close, NULL::REAL AS min_values, NULL::REAL AS max_values, NULL::REAL AS k_values,
-               NULL::REAL AS k_value, NULL::REAL AS d_value FROM
-	        (SELECT * FROM prices
-            WHERE asset = asset_type
-            ORDER BY timestamp DESC
-            LIMIT n_necessary_ohlc) AS last_prices
-        ORDER BY timestamp;
-
-    WITH min_values_window AS (
-        SELECT timestamp, MIN(low)
-            OVER(ORDER BY timestamp ROWS BETWEEN k_period - 1 PRECEDING AND CURRENT ROW) AS min_values
-        FROM temp_stochastic)
-
-    UPDATE temp_stochastic
-    SET min_values = min_values_window.min_values
-    FROM min_values_window
-    WHERE temp_stochastic.timestamp = min_values_window.timestamp;
-
-    WITH max_values_window AS (
-        SELECT timestamp, MAX(high)
-            OVER(ORDER BY timestamp ROWS BETWEEN k_period - 1 PRECEDING AND CURRENT ROW) AS max_values
-        FROM temp_stochastic)
-
-    UPDATE temp_stochastic
-    SET max_values = max_values_window.max_values
-    FROM max_values_window
-    WHERE temp_stochastic.timestamp = max_values_window.timestamp;
-
-    UPDATE temp_stochastic
-    SET k_values = new_values.new_value
-    FROM (
-        SELECT timestamp, ((close - min_values) / (max_values - min_values)) * 100 AS new_value
-        FROM temp_stochastic) AS new_values
-    WHERE temp_stochastic.timestamp = new_values.timestamp;
-
-    UPDATE temp_stochastic
-    SET k_value = new_values.calculated_k
-    FROM (
-        SELECT timestamp, AVG(temp_stochastic.k_values)
-            OVER(ORDER BY timestamp ROWS BETWEEN smooth - 1 PRECEDING AND CURRENT ROW) AS calculated_k
-        FROM temp_stochastic) AS new_values
-    WHERE temp_stochastic.timestamp = new_values.timestamp;
-
-    UPDATE temp_stochastic
-    SET d_value = new_values.calculated_d
-    FROM (
-        SELECT timestamp, AVG(temp_stochastic.k_value)
-            OVER(ORDER BY timestamp ROWS BETWEEN d_period - 1 PRECEDING AND CURRENT ROW) AS calculated_d
-        FROM temp_stochastic) AS new_values
-    WHERE temp_stochastic.timestamp = new_values.timestamp;
-
-
-    RETURN QUERY
-        SELECT temp_stochastic.timestamp, temp_stochastic.k_value, temp_stochastic.d_value FROM temp_stochastic;
-
-END $$;
+CREATE OR REPLACE FUNCTION round_minutes_in_timestamp(timestamp_field TIMESTAMP WITHOUT TIME ZONE, n_minutes INTEGER)
+RETURNS TIMESTAMP WITHOUT TIME ZONE
+LANGUAGE SQL IMMUTABLE AS $$
+SELECT
+     date_trunc('hour', timestamp_field)
+     +  cast((n_minutes::varchar ||' min') as interval)
+     * round((date_part('minute', timestamp_field)::float + date_part('second', timestamp_field) / 60.)::float / n_minutes::float)
+$$;
 
 
 CREATE OR REPLACE FUNCTION get_n_last_prices(n integer, in_asset asset)
@@ -150,7 +74,7 @@ END $$;
 
 CREATE OR REPLACE FUNCTION get_resampled_prices(in_asset asset, in_ohlc_interval ohlc_interval, n_necessary_ohlc integer)
 RETURNS TABLE (
-    timestamp_ timestamp,
+    resampled_timestamp timestamp,
     asset asset,
     open real,
     high real,
@@ -205,22 +129,97 @@ BEGIN
 END $$;
 
 
--- TRIGGER
-CREATE TRIGGER stochastic_trigger
-AFTER INSERT ON prices_test
-    FOR EACH ROW
-        EXECUTE FUNCTION insert_stochastic_values();
+CREATE OR REPLACE FUNCTION get_stochastic(in_ohlc_interval ohlc_interval, in_asset asset, k_period INTEGER, smooth INTEGER, d_period INTEGER)
+RETURNS TABLE (
+                datetime TIMESTAMP,
+                k_value REAL,
+                d_value REAL
+              )
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    extra_ohlc_buffer CONSTANT INTEGER := 20;
+	n_necessary_ohlc INTEGER;
+    window_lowest DOUBLE PRECISION;
+    window_highest DOUBLE PRECISION;
+    available_prices_count INTEGER;
+    n_minutes CONSTANT INTEGER := ohlc_interval_to_n_minutes(in_ohlc_interval);
+BEGIN
+
+    SELECT ((GREATEST(k_period, d_period) + smooth) * n_minutes) + extra_ohlc_buffer
+    INTO n_necessary_ohlc;
+
+    SELECT COUNT(*) FROM prices
+    WHERE asset = in_asset
+    INTO available_prices_count;
+
+    IF NOT available_prices_count >= n_necessary_ohlc THEN
+        RETURN;
+    end if;
+
+    CREATE TEMP TABLE IF NOT EXISTS temp_stochastic ON COMMIT DROP AS
+        SELECT resampled_timestamp,
+               high,
+               low,
+               close,
+               NULL::REAL AS min_values,
+               NULL::REAL AS max_values,
+               NULL::REAL AS k_values,
+               NULL::REAL AS k_value,
+               NULL::REAL AS d_value
+        FROM (SELECT * FROM get_resampled_prices(in_asset, in_ohlc_interval, n_necessary_ohlc)) AS last_prices
+        ORDER BY resampled_timestamp;
+
+    WITH min_values_window AS (
+        SELECT resampled_timestamp, MIN(low)
+            OVER(ORDER BY resampled_timestamp ROWS BETWEEN k_period - 1 PRECEDING AND CURRENT ROW) AS min_values
+        FROM temp_stochastic)
+
+    UPDATE temp_stochastic
+    SET min_values = min_values_window.min_values
+    FROM min_values_window
+    WHERE temp_stochastic.resampled_timestamp = min_values_window.resampled_timestamp;
+
+    WITH max_values_window AS (
+        SELECT resampled_timestamp, MAX(high)
+            OVER(ORDER BY resampled_timestamp ROWS BETWEEN k_period - 1 PRECEDING AND CURRENT ROW) AS max_values
+        FROM temp_stochastic)
+
+    UPDATE temp_stochastic
+    SET max_values = max_values_window.max_values
+    FROM max_values_window
+    WHERE temp_stochastic.resampled_timestamp = max_values_window.resampled_timestamp;
+
+    UPDATE temp_stochastic
+    SET k_values = new_values.new_value
+    FROM (
+        SELECT resampled_timestamp, ((close - min_values) / (max_values - min_values)) * 100 AS new_value
+        FROM temp_stochastic) AS new_values
+    WHERE temp_stochastic.resampled_timestamp = new_values.resampled_timestamp;
+
+    UPDATE temp_stochastic
+    SET k_value = new_values.calculated_k
+    FROM (
+        SELECT resampled_timestamp, AVG(temp_stochastic.k_values)
+            OVER(ORDER BY resampled_timestamp ROWS BETWEEN smooth - 1 PRECEDING AND CURRENT ROW) AS calculated_k
+        FROM temp_stochastic) AS new_values
+    WHERE temp_stochastic.resampled_timestamp = new_values.resampled_timestamp;
+
+    UPDATE temp_stochastic
+    SET d_value = new_values.calculated_d
+    FROM (
+        SELECT resampled_timestamp, AVG(temp_stochastic.k_value)
+            OVER(ORDER BY resampled_timestamp ROWS BETWEEN d_period - 1 PRECEDING AND CURRENT ROW) AS calculated_d
+        FROM temp_stochastic) AS new_values
+    WHERE temp_stochastic.resampled_timestamp = new_values.resampled_timestamp;
+
+    RETURN QUERY
+        SELECT temp_stochastic.resampled_timestamp, temp_stochastic.k_value, temp_stochastic.d_value FROM temp_stochastic;
+
+END $$;
 
 
-CREATE OR REPLACE FUNCTION round_minutes_in_timestamp(timestamp_field TIMESTAMP WITHOUT TIME ZONE, n_minutes INTEGER)
-RETURNS TIMESTAMP WITHOUT TIME ZONE
-LANGUAGE SQL IMMUTABLE AS $$
-SELECT
-     date_trunc('hour', timestamp_field)
-     +  cast((n_minutes::varchar ||' min') as interval)
-     * round((date_part('minute', timestamp_field)::float + date_part('second', timestamp_field) / 60.)::float / n_minutes::float)
-$$;
-
+-- TRIGGER FUNCTION
 CREATE OR REPLACE FUNCTION insert_stochastic_values()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -244,3 +243,9 @@ BEGIN
     RETURN NEW;
 
 END $$;
+
+-- REGISTER TRIGGER
+CREATE TRIGGER stochastic_test_prices_trigger
+AFTER INSERT ON prices_test
+    FOR EACH ROW
+        EXECUTE FUNCTION insert_stochastic_values();
