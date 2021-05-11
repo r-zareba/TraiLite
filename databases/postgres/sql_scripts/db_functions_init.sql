@@ -126,6 +126,8 @@ BEGIN
         window w as (partition by intervals.start order by p.timestamp asc rows between unbounded preceding and unbounded following)
         order by intervals.start;
 
+    DROP TABLE last_prices;
+
 END $$;
 
 
@@ -216,6 +218,7 @@ BEGIN
     RETURN QUERY
         SELECT temp_stochastic.resampled_timestamp, temp_stochastic.k_value, temp_stochastic.d_value FROM temp_stochastic;
 
+    DROP TABLE temp_stochastic;
 END $$;
 
 
@@ -227,19 +230,53 @@ AS $$
 DECLARE
     last_k_value REAL;
     last_d_value REAL;
-    stochastic_record RECORD;
+    stochastic_strategy_record RECORD;
+
+    _time_interval ohlc_interval;
+    _k_period INTEGER;
+    _smooth INTEGER;
+    _d_period INTEGER;
 
 BEGIN
-    FOR stochastic_record IN (SELECT * FROM stochastic_oscillators) LOOP
-        SELECT k_value, d_value FROM get_stochastic(ohlc_interval := stochastic_record.interval, asset_type := NEW.asset,
-            k_period := stochastic_record.k_period, smooth := stochastic_record.smooth, d_period := stochastic_record.d_period)
+
+    FOR stochastic_strategy_record IN (SELECT * FROM stochastic_strategies) LOOP
+        SELECT time_interval, k_period, smooth, d_period
+        FROM
+             (SELECT time_interval, k_period, smooth, d_period
+              FROM stochastic_oscillators
+              WHERE id = stochastic_strategy_record.enter_oscillator_id) AS stochastic_oscillator
+        INTO _time_interval, _k_period, _smooth, _d_period;
+
+        SELECT k_value, d_value
+        FROM get_stochastic(in_ohlc_interval := _time_interval, in_asset := NEW.asset, k_period := _k_period,
+            smooth := _smooth, d_period := _d_period)
         ORDER BY datetime DESC
         LIMIT 1
         INTO last_k_value, last_d_value;
 
         INSERT INTO stochastic_values (stochastic_oscillator_id, asset, k_value, d_value)
-        VALUES (stochastic_record.id, NEW.asset, last_k_value, last_d_value);
-    end loop;
+        VALUES (stochastic_strategy_record.enter_oscillator_id, NEW.asset, last_k_value, last_d_value);
+
+
+        SELECT time_interval, k_period, smooth, d_period
+        FROM
+             (SELECT time_interval, k_period, smooth, d_period
+              FROM stochastic_oscillators
+              WHERE id = stochastic_strategy_record.exit_oscillator_id) AS stochastic_oscillator
+        INTO _time_interval, _k_period, _smooth, _d_period;
+
+        SELECT k_value, d_value
+        FROM get_stochastic(in_ohlc_interval := _time_interval, in_asset := NEW.asset, k_period := _k_period,
+            smooth := _smooth, d_period := _d_period)
+        ORDER BY datetime DESC
+        LIMIT 1
+        INTO last_k_value, last_d_value;
+
+        INSERT INTO stochastic_values (stochastic_oscillator_id, asset, k_value, d_value)
+        VALUES (stochastic_strategy_record.exit_oscillator_id, NEW.asset, last_k_value, last_d_value);
+
+
+    END LOOP;
     RETURN NEW;
 
 END $$;
