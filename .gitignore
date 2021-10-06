@@ -1,4 +1,8 @@
 # Byte-compiled / optimized / DLL files
+
+# Project's virtual env
+trailite_env
+
 __pycache__/
 *.py[cod]
 *$py.class

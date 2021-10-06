@@ -1,0 +1,19 @@
+version: '3.5'
+services:
+
+  web:
+    build: .
+    shm_size: "256m"
+    ports:
+      - "5050:5050"
+    environment:
+      ENVIRONMENT: DOCKER
+    links:
+      - db
+
+  db:
+    image: mongo
+    ports:
+      - "27017:27017"
+    logging:
+      driver: "none"
