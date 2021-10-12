@@ -1,4 +1,6 @@
 import abc
+import time
+
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
@@ -13,20 +15,17 @@ from selenium.common.exceptions import (InvalidSessionIdException,
 
 class PriceAPI(abc.ABC):
     """ Price Api interface """
-    __slots__ = ('_asset', 'is_ready')
-
-    @property
-    @abc.abstractmethod
-    def PriceAPIExceptions(self):
-        """ Required class static attribute """
-        pass
+    __slots__ = ('_asset', )
 
     def __init__(self, asset: str):
         self._asset = asset
-        self.is_ready = False
 
     @abc.abstractmethod
     def init(self):
+        pass
+
+    @abc.abstractmethod
+    def is_ready(self) -> bool:
         pass
 
     @abc.abstractmethod
@@ -46,6 +45,8 @@ class TradingViewAPI(PriceAPI):
     """ Implementation of Trading View prices API using Selenium webdriver """
     __slots__ = ('_asset_url', '_driver', '_price_element')
 
+    N_DRIVER_TRIES = 5
+
     PriceAPIExceptions = (
         InvalidSessionIdException,
         WebDriverException,
@@ -64,19 +65,28 @@ class TradingViewAPI(PriceAPI):
 
     def init(self):
         """ Sets the driver and price element - prepares for price reading """
-        if not self.is_ready:
-            self._set_driver()
-            self._set_price_element()
-            self.is_ready = True
+        self._set_driver()
+        self._set_price_element()
+
+        n_tries = 0
+        while not self.is_ready() and n_tries < self.N_DRIVER_TRIES:
+            time.sleep(1)
+            n_tries += 1
+
+    def is_ready(self) -> bool:
+        try:
+            price = self.get_price()
+        except self.PriceAPIExceptions:
+            return False
+        return isinstance(price, float)
 
     def get_price(self) -> float:
-        if self.is_ready and self._price_element.text:
+        if self._price_element.text:
             return float(self._price_element.text)
 
     def close(self):
         if self._driver.service.process:
             self._driver.quit()
-            self.is_ready = False
 
     def restart(self):
         self.close()
@@ -116,7 +126,7 @@ class PriceAPIFactory:
             price_api = APIClass(asset)
             price_api.init()
 
-            if price_api.is_ready:
+            if price_api.is_ready():
                 return price_api
             continue
 
