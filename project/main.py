@@ -4,12 +4,12 @@ import os
 import django
 from timeloop import Timeloop
 
-
-# from trading import strategies, broker_api, trading_bot
-from price_api import price_api
-
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project.settings')
 django.setup()
+
+
+from trading import strategies, trading_bot
+from price_api import price_api
 
 from trai.models import OHLC, Color
 
@@ -32,87 +32,71 @@ prices_printed = False
 
 dax_updating = False
 dax_prices_list = list()
+dax_position = 0  # TODO get last from DB
 dax_n_times_restarted = 0
 dax_api = price_api.PriceAPIFactory.get_price_api(asset='DAX')
-dax_position = 0
+dax_strategy = strategies.StochasticOscillatorStrategy(
+    asset='DAX',
+    enter_interval='1T',
+    exit_interval='1T',
+    start_hour=7,
+    end_hour=16,
+    enter_k_period=7,
+    enter_smooth=2,
+    enter_d_period=2,
+    exit_k_period=12,
+    exit_smooth=2,
+    exit_d_period=2,
+    long_stoch_threshold=29,
+    short_stoch_threshold=70)
 
-# dax_position = transactions_manager.get_current_position('DAX')
-# dax_strategy = strategies.StochasticOscillatorStrategy(
-#     asset='DAX',
-#     enter_interval='1T',
-#     exit_interval='15T',
-#     start_hour=7,
-#     end_hour=16,
-#     enter_k_period=7,
-#     enter_smooth=2,
-#     enter_d_period=2,
-#     exit_k_period=12,
-#     exit_smooth=2,
-#     exit_d_period=2,
-#     long_stoch_threshold=29,
-#     short_stoch_threshold=70,
-#     prices_manager=prices_manager,
-#     indicator_manager=stochastic_manager)
-#
-# dax_bot = trading_bot.TradingBot(strategy_object=dax_strategy,
-#                                  broker_api_object=broker_api,
-#                                  transactions_manager=transactions_manager)
+dax_bot = trading_bot.TradingBot(strategy_object=dax_strategy)
 
 eurusd_updating = False
 eurusd_prices_list = list()
+# eurusd_position = transactions_manager.get_current_position('EURUSD')
+eurusd_position = 0
 eurusd_n_times_restarted = 0
 eurusd_api = price_api.PriceAPIFactory.get_price_api(asset='EURUSD')
-eurusd_position = 0
+eurusd_strategy = strategies.StochasticOscillatorStrategy(
+    asset='EURUSD',
+    enter_interval='1T',
+    exit_interval='5T',
+    start_hour=7,
+    end_hour=16,
+    enter_k_period=7,
+    enter_smooth=2,
+    enter_d_period=2,
+    exit_k_period=12,
+    exit_smooth=2,
+    exit_d_period=2,
+    long_stoch_threshold=20,
+    short_stoch_threshold=70)
 
-# eurusd_position = transactions_manager.get_current_position('EURUSD')
-# eurusd_strategy = strategies.StochasticOscillatorStrategy(
-#     asset='EURUSD',
-#     enter_interval='1T',
-#     exit_interval='5T',
-#     start_hour=7,
-#     end_hour=16,
-#     enter_k_period=7,
-#     enter_smooth=2,
-#     enter_d_period=2,
-#     exit_k_period=12,
-#     exit_smooth=2,
-#     exit_d_period=2,
-#     long_stoch_threshold=20,
-#     short_stoch_threshold=70,
-#     prices_manager=prices_manager,
-#     indicator_manager=stochastic_manager)
-#
-# eurusd_bot = trading_bot.TradingBot(strategy_object=eurusd_strategy,
-#                                     broker_api_object=broker_api,
-#                                     transactions_manager=transactions_manager)
+eurusd_bot = trading_bot.TradingBot(strategy_object=eurusd_strategy)
 
 gbpusd_updating = False
 gbpusd_prices_list = list()
+# gbpusd_position = transactions_manager.get_current_position('GBPUSD')
+gbpusd_position = 0
 gbpusd_n_times_restarted = 0
 gbpusd_api = price_api.PriceAPIFactory.get_price_api(asset='GBPUSD')
-gbpusd_position = 0
-
-# gbpusd_position = transactions_manager.get_current_position('GBPUSD')
-# gbpusd_strategy = strategies.StochasticExtendedStrategy(
-#     asset='GBPUSD',
-#     enter_interval='5T',
-#     exit_interval='5T',
-#     start_hour=7,
-#     end_hour=16,
-#     enter_k_period=7,
-#     enter_smooth=2,
-#     enter_d_period=2,
-#     exit_k_period=12,
-#     exit_smooth=2,
-#     exit_d_period=2,
-#     long_stoch_threshold=25,
-#     short_stoch_threshold=70,
-#     prices_manager=prices_manager,
-#     indicator_manager=stochastic_manager)
+gbpusd_strategy = strategies.StochasticExtendedStrategy(
+    asset='GBPUSD',
+    enter_interval='5T',
+    exit_interval='5T',
+    start_hour=7,
+    end_hour=16,
+    enter_k_period=7,
+    enter_smooth=2,
+    enter_d_period=2,
+    exit_k_period=12,
+    exit_smooth=2,
+    exit_d_period=2,
+    long_stoch_threshold=25,
+    short_stoch_threshold=70)
 #
-# gbpusd_bot = trading_bot.TradingBot(strategy_object=gbpusd_strategy,
-#                                     broker_api_object=broker_api,
-#                                     transactions_manager=transactions_manager)
+gbpusd_bot = trading_bot.TradingBot(strategy_object=gbpusd_strategy)
 
 """
 Register periodic tasks
@@ -155,7 +139,7 @@ def dax_update():
             tl.logger.info(f'DAX inserted: {ohlc}')
 
             del dax_prices_list[:]
-            # dax_position = dax_bot.take_action(dax_position)
+            dax_position = dax_bot.take_action(dax_position)
     else:
         dax_updating = False
         prices_printed = False
@@ -197,7 +181,7 @@ def eurusd_update():
             tl.logger.info(f'EURUSD inserted: {ohlc}')
 
             del eurusd_prices_list[:]
-            # eurusd_position = eurusd_bot.take_action(eurusd_position)
+            eurusd_position = eurusd_bot.take_action(eurusd_position)
     else:
         eurusd_updating = False
         prices_printed = False
@@ -239,7 +223,7 @@ def gbpusd_update():
             tl.logger.info(f'GBPUSD inserted: {ohlc}')
 
             del gbpusd_prices_list[:]
-            # gbpusd_position = gbpusd_bot.take_action(gbpusd_position)
+            gbpusd_position = gbpusd_bot.take_action(gbpusd_position)
     else:
         gbpusd_updating = False
         prices_printed = False

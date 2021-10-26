@@ -1,7 +1,12 @@
 import datetime as dt
 from typing import List
 
+import pandas as pd
 from django.db import models
+
+
+def get_shifted_time() -> dt.datetime:
+    return dt.datetime.now() - dt.timedelta(minutes=1)
 
 
 class Color:
@@ -18,9 +23,8 @@ class Color:
 
 
 class OHLC(models.Model):
-    # Database fields (columns)
     asset = models.CharField(max_length=10)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(default=get_shifted_time)
     open = models.FloatField()
     high = models.FloatField()
     low = models.FloatField()
@@ -36,6 +40,16 @@ class OHLC(models.Model):
                    low=min(prices_list),
                    close=prices_list[-1])
 
+    @classmethod
+    def get_n_last_ohlc(cls, n: int, asset: str) -> pd.DataFrame:
+        df = pd.DataFrame(cls.objects.filter(asset=asset).order_by('-timestamp')[:n].values())
+        if df.empty:
+            raise ValueError(f'\'{asset}\' does not have records in OHLC table')
+
+        df.set_index(pd.DatetimeIndex(df['timestamp']), inplace=True)
+        df.drop(['id', 'timestamp'], axis=1, inplace=True)
+        return df.sort_index(ascending=True)
+
     def __str__(self):
         """ For nice, colorful printing """
         return f'{Color.BOLD}Timestamp - {Color.END} {self.timestamp}, ' \
@@ -43,3 +57,32 @@ class OHLC(models.Model):
                f'{Color.BOLD}High - {Color.END} {self.high}, ' \
                f'{Color.BOLD}Low - {Color.END} {self.low}, ' \
                f'{Color.BOLD}Close - {Color.END} {self.close}'
+
+
+class StochasticValues(models.Model):
+    asset = models.CharField(max_length=10)
+    timestamp = models.DateTimeField(default=get_shifted_time)
+    enter_k = models.FloatField(null=True, blank=True)
+    enter_d = models.FloatField(null=True, blank=True)
+    exit_k = models.FloatField(null=True, blank=True)
+    exit_d = models.FloatField(null=True, blank=True)
+
+    @classmethod
+    def get_n_last_stochastic(cls, n: int, asset: str) -> pd.DataFrame:
+        df = pd.DataFrame(cls.objects.filter(asset=asset).order_by('-timestamp')[:n].values())
+        if df.empty:
+            raise ValueError(f'\'{asset}\' does not have records in OHLC table')
+
+        df.set_index(pd.DatetimeIndex(df['timestamp']), inplace=True)
+        df.drop(['id', 'timestamp'], axis=1, inplace=True)
+        return df.sort_index(ascending=True)
+
+    def __str__(self):
+        return f'{self.asset}, enter_k; {self.enter_k}, enter_d: {self.enter_d}, exit_k: {self.exit_k}, exit_d: {self.exit_d}'
+
+
+class Transaction(models.Model):
+    asset = models.CharField(max_length=10)
+    timestamp = models.DateTimeField(default=dt.datetime.now)
+    action = models.IntegerField()
+    comment = models.CharField(max_length=20)
