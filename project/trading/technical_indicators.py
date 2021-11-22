@@ -19,6 +19,7 @@ class StochasticOscillator:
         k_value = ((df['close'] - low) / (high - low)) * 100
         df.loc[:, 'K'] = k_value.rolling(window=smooth).mean()
         df.loc[:, 'D'] = df['K'].rolling(window=d_period).mean()
+        df.fillna(0, inplace=True)
 
 
 class SimpleMovingAverage:

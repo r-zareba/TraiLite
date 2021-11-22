@@ -78,7 +78,8 @@ class StochasticValues(models.Model):
         return df.sort_index(ascending=True)
 
     def __str__(self):
-        return f'{self.asset}, enter_k; {self.enter_k}, enter_d: {self.enter_d}, exit_k: {self.exit_k}, exit_d: {self.exit_d}'
+        return f'{self.asset}, {self.timestamp} - enter_k; {self.enter_k}, enter_d: {self.enter_d}, ' \
+               f'exit_k: {self.exit_k}, exit_d: {self.exit_d}'
 
 
 class Transaction(models.Model):
@@ -86,3 +87,6 @@ class Transaction(models.Model):
     timestamp = models.DateTimeField(default=dt.datetime.now)
     action = models.IntegerField()
     comment = models.CharField(max_length=20)
+
+    def __str__(self):
+        return f'{self.asset}, {self.timestamp} - action: {self.action}, comment: {self.comment}'

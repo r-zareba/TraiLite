@@ -58,6 +58,9 @@ class IndicatorReader:
         to calculate necessary market dataframes
         """
         market_data = OHLC.get_n_last_ohlc(self._n_ohlc_to_download, self._asset)
+
+        print(f'{self._asset}, n to download: {self._n_ohlc_to_download}')
+
         if len(market_data) < self._n_ohlc_to_download:
             return False
 
@@ -130,7 +133,13 @@ class StochasticOscillatorReader(IndicatorReader):
             exit_k=self.current_exit_k,
             exit_d=self.current_exit_d)
 
+        print(f'{self._asset}, enter shape: {self._enter_df.shape}')
+        print(f'{self._asset}, exit shape: {self._exit_df.shape}')
+
+        print(f'{self._asset}, enter tail {self._enter_df.tail()}')
+        print(f'{self._asset}, exit tail {self._exit_df.tail()}')
         print(stochastic_values)
+
         stochastic_values.save()
         return True
 
