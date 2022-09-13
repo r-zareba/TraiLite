@@ -1,5 +1,4 @@
 import unittest
-import time
 
 from price_api import price_api
 
@@ -16,10 +15,10 @@ class TestPriceAPI(unittest.TestCase):
     #             print(price)
     #             self.assertEqual(type(price), float)
 
-    def setUp(self) -> None:
+    def setUp(self):
         self.price_api = price_api.PriceAPIFactory.get_price_api(asset=self.TEST_ASSET)
 
-    def tearDown(self) -> None:
+    def tearDown(self):
         self.price_api.close()
 
     def test_price_read(self):

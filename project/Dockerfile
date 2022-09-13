@@ -1,24 +1,29 @@
-FROM python:3.6.9
+FROM python:3.9.7
 
-ENV TZ="Europe/Warsaw"
-RUN date
+ENV DEBIAN_FRONTEND noninteractive
+ENV GECKODRIVER_VER v0.29.0
+ENV FIREFOX_VER 87.0
+ENV RUNTIME_ENV DOCKER
 
-# Disable setuid / setgid binaries - for security
-# RUN find / -perm /6000 -type f -exec chmod a-s {} \; || true
+RUN apt-get update \
+   && apt-get upgrade -y \
+   && apt-get install -y \
+       firefox-esr
 
-# Install firefox to run selenium
-RUN apt-get update && apt-get install -y \
-    fonts-liberation libappindicator3-1 libasound2 libatk-bridge2.0-0 \
-    libnspr4 libnss3 lsb-release xdg-utils libxss1 libdbus-glib-1-2 \
-    curl unzip wget \
-    xvfb
+# Add latest Firefox
+RUN apt-get install -y \
+       libx11-xcb1 \
+       libdbus-glib-1-2 \
+   && curl -sSLO https://download-installer.cdn.mozilla.net/pub/firefox/releases/${FIREFOX_VER}/linux-x86_64/en-US/firefox-${FIREFOX_VER}.tar.bz2 \
+   && tar -jxf firefox-* \
+   && mv firefox /opt/ \
+   && chmod 755 /opt/firefox \
+   && chmod 755 /opt/firefox/firefox
 
-RUN FIREFOX_SETUP=firefox-setup.tar.bz2 && \
-    apt-get purge firefox && \
-    wget -O $FIREFOX_SETUP "https://download.mozilla.org/?product=firefox-latest&os=linux64" && \
-    tar xjf $FIREFOX_SETUP -C /opt/ && \
-    ln -s /opt/firefox/firefox /usr/bin/firefox && \
-    rm $FIREFOX_SETUP
+# Add geckodriver
+RUN curl -sSLO https://github.com/mozilla/geckodriver/releases/download/${GECKODRIVER_VER}/geckodriver-${GECKODRIVER_VER}-linux64.tar.gz \
+   && tar zxf geckodriver-*.tar.gz \
+   && mv geckodriver /usr/bin/
 
 COPY requirements.txt /
 RUN python -m pip install --upgrade pip

@@ -3,6 +3,9 @@
 # Project's virtual env
 trailite_env
 
+# Portfolio configuration file
+/project/portfolio_config.py
+
 __pycache__/
 *.py[cod]
 *$py.class
@@ -135,3 +138,4 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+

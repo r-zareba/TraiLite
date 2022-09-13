@@ -1,11 +1,13 @@
 import abc
 import time
+import os
 
 from selenium import webdriver
+from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support import expected_conditions as ec
 from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import (InvalidSessionIdException,
                                         WebDriverException,
@@ -55,7 +57,7 @@ class TradingViewAPI(PriceAPI):
         StaleElementReferenceException)
 
     price_url = 'https://www.tradingview.com/symbols/'
-    price_xpath = '/html/body/div[2]/div[4]/div[3]/header/div/div[3]/div[1]/div/div/div/div[1]/div[1]'
+    price_xpath = '/html/body/div[2]/div[4]/div[2]/header/div/div[3]/div[1]/div/div/div/div[1]/div[1]'
 
     def __init__(self, asset: str):
         super().__init__(asset)
@@ -64,7 +66,6 @@ class TradingViewAPI(PriceAPI):
         self._price_element = None
 
     def init(self):
-        """ Sets the driver and price element - prepares for price reading """
         self._set_driver()
         self._set_price_element()
 
@@ -85,28 +86,28 @@ class TradingViewAPI(PriceAPI):
             return float(self._price_element.text)
 
     def close(self):
-        if self._driver.service.process:
-            self._driver.quit()
+        self._driver.close()
+        # if self._driver.service.process:
+        #     self._driver.quit()
 
     def restart(self):
         self.close()
         self.init()
 
     def _set_driver(self):
-        """ Set Firefox webdriver """
         options = Options()
         options.set_preference('dom.webnotifications.enabled', False)
         options.headless = True
 
-        driver = webdriver.Firefox(
-            executable_path='./geckodriver', options=options)
-        self._driver = driver
+        if os.environ.get('RUNTIME_ENV') == 'DOCKER':
+            self._driver = webdriver.Firefox(options=options)
+        else:
+            self._driver = webdriver.Firefox(service=Service('./geckodriver'), options=options)
 
     def _set_price_element(self):
-        """ Set price element to read """
         self._driver.get(self._asset_url)
         try:
-            WebDriverWait(self._driver, 15).until(EC.presence_of_element_located((By.XPATH, self.price_xpath)))
+            WebDriverWait(self._driver, 15).until(ec.presence_of_element_located((By.XPATH, self.price_xpath)))
         except TimeoutException:
             print(f'Price element not found!\nError occured in: {self}')
             print('Closing current session...')
