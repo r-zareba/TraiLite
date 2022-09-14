@@ -38,6 +38,6 @@ ENV APP_PATH /home/trai_app
 RUN mkdir -p $APP_PATH
 COPY --chown=trai_app:trai_app . $APP_PATH
 WORKDIR $APP_PATH
-RUN chmod +x ./start.sh
+RUN chmod +x ./run.sh
 
-ENTRYPOINT ["./start.sh"]
+ENTRYPOINT ["./run.sh"]
