@@ -11,7 +11,7 @@
 //
 //
 //
-// pipeline {
+pipeline {
 
   agent any
 
@@ -35,7 +35,7 @@
         // additionalBuildArgs  '--build-arg version=1.0.2'
         args 'test'
     }
-}
+  }
 
       steps {
         echo 'Testing application...'
